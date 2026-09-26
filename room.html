@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#08080f">
+<meta name="robots" content="noindex">
+<title>Room — Watch Together</title>
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/room.css">
+</head>
+<body class="room">
+
+<!-- ------------------------------------------------------------------ boot -->
+<div id="bootScreen" class="boot">
+  <div class="spinner" aria-hidden="true"></div>
+  <p class="boot-text" id="bootText" role="status" aria-live="polite">Connecting…</p>
+  <button id="bootRetry" class="btn btn-primary" type="button" hidden>Retry</button>
+  <button id="bootBack" class="btn btn-ghost" type="button" hidden>Back to start</button>
+</div>
+
+<!-- ------------------------------------------------------------------ room -->
+<div id="roomApp" class="room-app" hidden>
+
+  <header class="topbar">
+    <a class="icon-btn" href="index.html" id="backLink" aria-label="Leave room and go back">←</a>
+
+    <button class="code-chip" id="codeChip" type="button" aria-label="Copy room code">
+      <span class="code-label">CODE</span>
+      <span class="code-value" id="codeValue">------</span>
+    </button>
+
+    <button class="icon-btn" id="shareBtn" type="button" aria-label="Share room">↗</button>
+
+    <div class="online-chip" id="onlineChip" title="People online">
+      <span class="online-dot" aria-hidden="true"></span>
+      <span id="onlineCount">1</span>
+    </div>
+  </header>
+
+  <!-- ------------------------------------------------------------ stage -->
+  <section class="stage" id="stage" aria-label="Watch area">
+    <div class="stage-empty" id="stageEmpty">
+      <p class="stage-empty-title">Nothing playing yet</p>
+      <p class="stage-empty-sub" id="stageEmptySub">Choose a source below.</p>
+    </div>
+
+    <div class="yt-wrap" id="ytWrap" hidden><div id="ytPlayer"></div></div>
+
+    <!--
+      Bilibili's official player endpoint is designed to be embedded.
+      We rely on normal cross-origin isolation rather than a sandbox,
+      because the player needs its own cookies and storage to work.
+    -->
+    <iframe id="bbFrame" class="frame" hidden title="Bilibili player"
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+            referrerpolicy="no-referrer"></iframe>
+
+    <!--
+      Generic external sites run in a real sandbox, deliberately without
+      `allow-same-origin`, so the frame gets an opaque, unique origin.
+    -->
+    <iframe id="webFrame" class="frame" hidden title="Embedded website"
+            allow="autoplay; fullscreen"
+            referrerpolicy="no-referrer"
+            sandbox="allow-scripts allow-forms allow-popups allow-presentation"></iframe>
+
+    <div class="video-wrap" id="videoWrap" hidden>
+      <video id="remoteVideo" playsinline autoplay></video>
+      <button class="tap-play" id="tapPlay" type="button" hidden>▶ Tap to play</button>
+    </div>
+
+    <div class="stage-badge" id="stageBadge" hidden></div>
+    <div class="stage-note" id="stageNote" hidden></div>
+
+    <div class="blocker" id="stageBlocker" hidden aria-hidden="true"></div>
+  </section>
+
+  <!-- ------------------------------------------------------------ sources -->
+  <nav class="source-tabs" id="sourceTabs" aria-label="Content source">
+    <button class="tab" data-src="youtube"  type="button">YouTube</button>
+    <button class="tab" data-src="bilibili" type="button">Bilibili</button>
+    <button class="tab" data-src="website"  type="button">Website</button>
+    <button class="tab" data-src="screen"   type="button">Share</button>
+  </nav>
+
+  <form class="source-bar" id="sourceBar" hidden autocomplete="off" novalidate>
+    <input id="sourceInput" class="input" type="text" placeholder="" aria-label="Content link">
+    <button class="btn btn-primary btn-sm" type="submit" id="sourceGo">Load</button>
+    <button class="btn btn-ghost btn-sm" type="button" id="sourceCancel">Cancel</button>
+  </form>
+
+  <!-- ------------------------------------------------------------ controls -->
+  <div class="controls" id="controls">
+    <button class="ctl" id="playBtn" type="button" aria-label="Play or pause" disabled>▶</button>
+    <span class="time" id="timeNow">0:00</span>
+    <input class="seek" id="seek" type="range" min="0" max="1000" value="0" step="1"
+           aria-label="Seek within video" disabled>
+    <span class="time" id="timeEnd">0:00</span>
+    <button class="ctl" id="muteBtn" type="button" aria-label="Mute or unmute" disabled>🔊</button>
+    <button class="ctl" id="fsBtn" type="button" aria-label="Fullscreen">⛶</button>
+  </div>
+
+  <!-- ------------------------------------------------------------ chat -->
+  <section class="chat" aria-label="Chat">
+    <div class="chat-head">
+      <span class="chat-title">Chat</span>
+      <span class="chat-hint" id="chatHint"></span>
+    </div>
+    <div class="chat-list" id="chatList" role="log" aria-live="polite" aria-relevant="additions"></div>
+  </section>
+
+  <form class="composer" id="composer" autocomplete="off">
+    <input id="chatInput" class="input" type="text" maxlength="600"
+           placeholder="Write a message…" aria-label="Message" enterkeyhint="send">
+    <button class="btn btn-primary btn-send" type="submit" aria-label="Send message">Send</button>
+  </form>
+
+  <footer class="room-foot">
+    <button class="btn btn-danger btn-block" id="leaveBtn" type="button">Leave Room</button>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="js/room.js"></script>
+</body>
+</html>

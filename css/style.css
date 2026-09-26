@@ -1,0 +1,371 @@
+/* =========================================================
+   css/style.css — shared base + landing page
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The `hidden` attribute is how every overlay in this app is
+   toggled (boot screen, room shell, stage, source bar, tap-to-play
+   button, retry/back buttons). Author rules like `.boot { display: flex }`
+   tie on specificity with the browser's `[hidden] { display: none }`
+   and win, so we make the intent explicit and unbeatable here.
+   Without this rule, JS `element.hidden = true` silently does
+   nothing for any element that also has a `display` rule. */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+:root {
+  --bg: #08080f;
+  --bg-soft: #0e0e1a;
+  --text: #f2f2ff;
+  --muted: #9a9ab5;
+  --accent: #7c5cff;
+  --accent-2: #4f8cff;
+  --danger: #ff5c5c;
+  --radius: 18px;
+  --radius-sm: 14px;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+}
+
+/* --------------------------------------------------------- landing bg */
+body.landing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  min-height: 100svh;
+  padding: 24px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  overflow-x: hidden;
+  position: relative;
+}
+
+.bg-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 50% at 15% 10%, rgba(124, 92, 255, 0.18), transparent 70%),
+    radial-gradient(55% 45% at 90% 20%, rgba(79, 140, 255, 0.16), transparent 70%),
+    radial-gradient(70% 60% at 50% 100%, rgba(124, 92, 255, 0.10), transparent 70%);
+}
+
+/* --------------------------------------------------------- layout */
+.landing-wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.brand {
+  text-align: center;
+  padding: 8px 0 4px;
+}
+
+.brand-mark {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 12px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 10px 30px rgba(124, 92, 255, 0.35);
+}
+
+.brand-name {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.brand-tag {
+  margin-top: 6px;
+  font-size: 14.5px;
+  color: var(--muted);
+}
+
+/* --------------------------------------------------------- glass cards */
+.card {
+  padding: 18px;
+  border-radius: var(--radius);
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+/* --------------------------------------------------------- fields */
+.field {
+  display: block;
+}
+
+.field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.field-help {
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.input {
+  width: 100%;
+  min-height: 50px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input::placeholder {
+  color: #6f6f8d;
+}
+
+.input:focus {
+  border-color: rgba(124, 92, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.22);
+}
+
+.code-input {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.35em;
+  font-weight: 800;
+  font-size: 20px;
+  padding: 16px 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.16);
+  caret-color: var(--accent);
+}
+
+/* --------------------------------------------------------- buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 50px;
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  text-decoration: none;
+  user-select: none;
+  touch-action: manipulation;
+  transition: transform 0.12s ease, background 0.15s ease,
+    border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 8px 24px rgba(80, 100, 255, 0.32);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.btn-danger {
+  background: rgba(255, 60, 60, 0.12);
+  border-color: rgba(255, 80, 80, 0.35);
+  color: #ffb4b4;
+}
+
+.btn-sm {
+  min-height: 42px;
+  padding: 10px 14px;
+  font-size: 15px;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-send {
+  width: auto;
+  min-width: 84px;
+  padding: 0 18px;
+}
+
+.btn-ico {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* --------------------------------------------------------- join row */
+.join-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.join-row .input {
+  flex: 1;
+  min-width: 0;
+}
+
+.join-row .btn {
+  width: auto;
+  min-width: 92px;
+}
+
+/* --------------------------------------------------------- divider */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.12),
+    transparent
+  );
+}
+
+/* --------------------------------------------------------- status + footnote */
+.status {
+  min-height: 22px;
+  margin-top: 8px;
+  text-align: center;
+  font-size: 14px;
+  color: #ffb4b4;
+}
+
+.status.ok {
+  color: #b9ffd0;
+}
+
+.footnote {
+  margin-top: 18px;
+  padding: 0 8px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* --------------------------------------------------------- toast */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%) translateY(20px);
+  max-width: calc(100vw - 32px);
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: rgba(18, 18, 30, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 14px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 9999;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* --------------------------------------------------------- a11y */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --------------------------------------------------------- larger screens */
+@media (min-width: 700px) {
+  .landing-wrap {
+    max-width: 480px;
+  }
+  .brand-name {
+    font-size: 30px;
+  }
+}

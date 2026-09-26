@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#08080f">
+<meta name="description" content="A tiny private room where two or three people watch the same thing at the same time.">
+<title>Watch Together — private rooms</title>
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="landing">
+
+<div class="bg-glow" aria-hidden="true"></div>
+
+<main class="landing-wrap">
+
+  <header class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+        <path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor"/>
+      </svg>
+    </div>
+    <h1 class="brand-name">Watch Together</h1>
+    <p class="brand-tag">A tiny private room for two or three.</p>
+  </header>
+
+  <section class="card glass" aria-labelledby="nameLabel">
+    <label class="field" for="nameInput">
+      <span class="field-label" id="nameLabel">Your name</span>
+      <input id="nameInput" class="input" type="text" maxlength="18"
+             placeholder="e.g. Sam" autocomplete="nickname" enterkeyhint="done"
+             aria-describedby="nameHelp">
+    </label>
+    <p class="field-help" id="nameHelp">Shown next to your chat messages.</p>
+  </section>
+
+  <section class="card glass" aria-label="Room actions">
+    <button id="createBtn" class="btn btn-primary" type="button">
+      <span class="btn-ico" aria-hidden="true">＋</span> Create Room
+    </button>
+
+    <div class="divider"><span>or join one</span></div>
+
+    <form id="joinForm" class="join-row" autocomplete="off" novalidate>
+      <input id="codeInput" class="input code-input" type="text" inputmode="text"
+             autocapitalize="characters" autocomplete="off" spellcheck="false"
+             maxlength="6" placeholder="ROOM CODE" aria-label="Room code">
+      <button class="btn btn-ghost" type="submit">Join</button>
+    </form>
+  </section>
+
+  <p id="landingStatus" class="status" role="status" aria-live="polite"></p>
+
+  <p class="footnote">
+    No accounts, no uploads, no library. The room code is the only key —
+    keep it between the people you trust.
+  </p>
+
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
