@@ -10,7 +10,7 @@
    the room lifecycle has changed.
    ========================================================= */
 
-console.log('[BUILD] Watch Together BUILD 2026-09-26-H');
+console.log('[BUILD] Watch Together BUILD 2026-09-26-I');
 
 import {
   sb,
@@ -299,6 +299,25 @@ let searchInFlight = false;
 
 const onlineIds = new Set();
 
+/* -------------------------------------------------- state application */
+
+/**
+ * The `screen` kind is signalling-only. The actual video is delivered
+ * by the WebRTC stream callback (`onStream` in setupScreenShare),
+ * which shows the video element directly. If we let the state
+ * broadcast reach the Player, `show('screen', …)` falls through to
+ * `setKind('none')` — Player only knows about youtube/bilibili/
+ * website — and hides the video that the stream just made visible.
+ *
+ * So `applyPlayerState` is the single entry point for state coming
+ * over the wire, and it deliberately ignores the screen kind.
+ */
+function applyPlayerState(state) {
+  if (!state) return;
+  if (state.kind === 'screen') return;
+  player.applyState(state).catch(() => {});
+}
+
 /* ------------------------------------------------------------ bootstrap */
 
 boot('Connecting…');
@@ -486,8 +505,11 @@ async function start() {
 
   setHostUi();
 
+  // If the host is already sharing when we join, the state says
+  // kind: 'screen'. We skip that here and wait for the WebRTC
+  // stream to arrive through onStream.
   if (room.state && room.state.kind && room.state.kind !== 'none') {
-    player.applyState(room.state).catch(() => {});
+    applyPlayerState(room.state);
   }
 
   startParticipantHeartbeat();
@@ -1168,7 +1190,9 @@ function openChannel() {
     attach('broadcast:state', () => {
       channel.on('broadcast', { event: 'state' }, ({ payload }) => {
         if (isHost) return;
-        player.applyState(payload).catch(() => {});
+        // Apply through the helper so a `kind: 'screen'` state
+        // never hides the video delivered by the WebRTC stream.
+        applyPlayerState(payload);
       });
     });
 
