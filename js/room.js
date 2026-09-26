@@ -3,14 +3,9 @@
    ---------------------------------------------------------
    Wires together: database, realtime channel, presence,
    chat, player, screen sharing, reactions, fullscreen.
-
-   The reaction system rides the existing Realtime channel
-   (one extra broadcast event). The fullscreen UI replaces
-   the previous inline fullscreen handler; nothing else in
-   the room lifecycle has changed.
    ========================================================= */
 
-console.log('[BUILD] Watch Together BUILD 2026-09-26-I');
+console.log('[BUILD] Watch Together BUILD 2026-09-26-J');
 
 import {
   sb,
@@ -306,16 +301,78 @@ const onlineIds = new Set();
  * by the WebRTC stream callback (`onStream` in setupScreenShare),
  * which shows the video element directly. If we let the state
  * broadcast reach the Player, `show('screen', …)` falls through to
- * `setKind('none')` — Player only knows about youtube/bilibili/
- * website — and hides the video that the stream just made visible.
- *
- * So `applyPlayerState` is the single entry point for state coming
- * over the wire, and it deliberately ignores the screen kind.
+ * `setKind('none')` and hides the video that the stream just made
+ * visible.
  */
 function applyPlayerState(state) {
   if (!state) return;
   if (state.kind === 'screen') return;
   player.applyState(state).catch(() => {});
+}
+
+/* ------------------------------------------------------ video playback */
+
+/**
+ * Robust playback for the remote (guest) video:
+ *   1. Try unmuted. Works on desktop and after user interaction.
+ *   2. Fall back to muted. Always works, even on iOS Safari.
+ *      Show a "tap for sound" button so the user can unmute.
+ *   3. If even muted play fails, show "tap to play".
+ *
+ * Never leaves the button visible when playback has actually started.
+ */
+async function attemptPlayback() {
+  const video = els.remoteVideo;
+  if (!video || !video.srcObject) {
+    console.log('[PLAYER] attemptPlayback: no srcObject yet');
+    return;
+  }
+
+  console.log('[PLAYER] attemptPlayback: trying unmuted');
+  video.muted = false;
+
+  try {
+    await video.play();
+    els.tapPlay.hidden = true;
+    console.log('[PLAYER] playing unmuted');
+    return;
+  } catch (err) {
+    console.log('[PLAYER] unmuted autoplay blocked:', err && err.name);
+  }
+
+  console.log('[PLAYER] attemptPlayback: falling back to muted');
+  video.muted = true;
+
+  try {
+    await video.play();
+    els.tapPlay.textContent = '🔊 Tap for sound';
+    els.tapPlay.hidden = false;
+    console.log('[PLAYER] playing muted — awaiting user tap for sound');
+  } catch (err) {
+    els.tapPlay.textContent = '▶ Tap to play';
+    els.tapPlay.hidden = false;
+    console.log('[PLAYER] muted autoplay also blocked:', err && err.name);
+  }
+}
+
+/** Called when the user taps the overlay. Unmutes and hides the button. */
+async function userInitiatedPlay() {
+  const video = els.remoteVideo;
+  if (!video || !video.srcObject) return;
+
+  video.muted = false;
+  try {
+    await video.play();
+    els.tapPlay.hidden = true;
+    console.log('[PLAYER] user resumed playback unmuted');
+  } catch (err) {
+    // Unmuted play was refused even after a gesture; revert to muted
+    // so the user at least sees the picture.
+    video.muted = true;
+    try { await video.play(); } catch { /* ignore */ }
+    els.tapPlay.textContent = '🔊 Tap for sound';
+    console.log('[PLAYER] user unmute refused; staying muted:', err && err.name);
+  }
 }
 
 /* ------------------------------------------------------------ bootstrap */
@@ -505,9 +562,6 @@ async function start() {
 
   setHostUi();
 
-  // If the host is already sharing when we join, the state says
-  // kind: 'screen'. We skip that here and wait for the WebRTC
-  // stream to arrive through onStream.
   if (room.state && room.state.kind && room.state.kind !== 'none') {
     applyPlayerState(room.state);
   }
@@ -612,20 +666,40 @@ function setupScreenShare() {
         payload: { ...message, from: clientId },
       });
     },
+
     onStream: (stream, fromId) => {
+      console.log('[SCREEN] onStream called', {
+        hasStream: !!stream,
+        fromId,
+      });
+
       if (stream) {
         els.remoteVideo.srcObject = stream;
         els.videoWrap.hidden = false;
-        els.tapPlay.hidden = false;
+        els.tapPlay.hidden = true;
         player.setKind('screen');
         player.setBadge('LIVE SCREEN');
-        attemptPlayback();
+
+        // Log what we actually got.
+        const tracks = stream.getTracks ? stream.getTracks() : [];
+        console.log('[SCREEN] stream tracks:', tracks.map((t) => ({
+          kind: t.kind,
+          enabled: t.enabled,
+          muted: t.muted,
+          readyState: t.readyState,
+        })));
+
+        // Wait a microtask so the video element has had a chance to
+        // attach the stream before we try to play it.
+        setTimeout(() => { attemptPlayback().catch(() => {}); }, 0);
       } else {
+        console.log('[SCREEN] onStream: clearing (host stopped)');
         els.remoteVideo.srcObject = null;
         els.tapPlay.hidden = true;
         if (fromId) player.setBadge(null);
       }
     },
+
     onStatus: (state, info) => {
       if (state === 'live') {
         player.setBadge('SHARING');
@@ -642,6 +716,7 @@ function setupScreenShare() {
         player.setBadge(null);
         player.setKind('none');
         player.setEmptySubtitle('Screen sharing has stopped.');
+        els.remoteVideo.srcObject = null;
         pushState({ kind: 'none', src: null, playing: false, position: 0 });
       }
       if (state === 'lost') {
@@ -651,19 +726,8 @@ function setupScreenShare() {
   });
 
   els.tapPlay.addEventListener('click', () => {
-    els.tapPlay.hidden = true;
-    attemptPlayback();
+    userInitiatedPlay().catch(() => {});
   });
-}
-
-function attemptPlayback() {
-  const video = els.remoteVideo;
-  const promise = video.play();
-  if (promise && typeof promise.catch === 'function') {
-    promise.catch(() => {
-      els.tapPlay.hidden = false;
-    });
-  }
 }
 
 /* ------------------------------------------------------- controls setup */
@@ -704,9 +768,6 @@ function setupControls() {
     const target = (Number(els.seek.value) / 1000) * duration;
     player.seekTo(target);
   });
-
-  // NOTE: #fsBtn is wired by setupFullscreenUI(). It is intentionally
-  // not attached here to avoid two handlers firing per tap.
 
   els.sourceTabs.addEventListener('click', (event) => {
     const tab = event.target.closest('.tab');
@@ -755,10 +816,6 @@ function setupReactions() {
       };
 
       console.log('[REACTION] sending', payload);
-
-      // Show locally right away so the sender sees feedback even
-      // though the channel is configured with `broadcast.self: false`
-      // and will not echo the event back to this client.
       reactions.show(payload);
 
       channel?.send({
@@ -1066,8 +1123,23 @@ async function toggleScreenShare() {
 
   try {
     await screenShare.start();
+    const stream = screenShare.stream;
+    console.log('[SCREEN] host started sharing', {
+      hasStream: !!stream,
+      tracks: stream ? stream.getTracks().map((t) => t.kind) : [],
+    });
+
+    // Give the host a muted preview of what they are sharing.
+    if (stream) {
+      els.remoteVideo.srcObject = stream;
+      els.remoteVideo.muted = true;
+      els.videoWrap.hidden = false;
+      els.tapPlay.hidden = true;
+      try { await els.remoteVideo.play(); } catch { /* ignore */ }
+    }
 
     for (const peerId of peerIds) {
+      console.log('[SCREEN] connecting to peer', peerId);
       await screenShare.connectTo(peerId);
     }
 
@@ -1190,14 +1262,13 @@ function openChannel() {
     attach('broadcast:state', () => {
       channel.on('broadcast', { event: 'state' }, ({ payload }) => {
         if (isHost) return;
-        // Apply through the helper so a `kind: 'screen'` state
-        // never hides the video delivered by the WebRTC stream.
         applyPlayerState(payload);
       });
     });
 
     attach('broadcast:sig', () => {
       channel.on('broadcast', { event: 'sig' }, ({ payload }) => {
+        console.log('[SIG] received', payload && payload.kind);
         screenShare?.handleSignal(payload);
       });
     });
@@ -1428,10 +1499,6 @@ async function leave({ endRoom = false } = {}) {
 }
 
 /* ---------------------------------------------------------- last rites */
-
-// NOTE: We deliberately do NOT close the room on pagehide. Doing so
-// used to close rooms the host was only navigating away from, which
-// then made `isRoomOpen()` reject the room when the host returned.
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;

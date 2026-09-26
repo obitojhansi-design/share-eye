@@ -12,13 +12,21 @@
    on Chrome and Edge desktop, when the user ticks the "Share tab
    audio" / "Share system audio" checkbox in the picker.
 
-   It does NOT work on:
-     • iOS Safari (any version)
-     • Chrome on Android
-     • Firefox for Android
-   On those, the browser either throws or returns video-only.
-   We retry with `audio: false` so sharing still works, and tell
-   the user via `onStatus('live', { hasAudio: false })`.
+   It does NOT work on iOS Safari, Chrome on Android, or Firefox
+   for Android. On those, the browser either throws or returns
+   video-only. We retry with `audio: false` so sharing still works,
+   and tell the user via `onStatus('live', { hasAudio: false })`.
+
+   Sender tuning
+   -------------
+   RTCRtpSender.setParameters() is only valid AFTER the peer
+   connection has had setLocalDescription() called at least once.
+   Calling it before negotiation leaves the encodings empty and
+   the sender silently produces no RTP — the offer/answer succeeds,
+   ICE completes, ontrack fires, and no frames ever arrive.
+
+   So the tuning is deferred to immediately after setLocalDescription
+   in connectTo().
    ========================================================= */
 
 import { CONFIG } from './config.js';
@@ -30,7 +38,6 @@ const ICE_CONFIG = {
   ],
   bundlePolicy: 'max-bundle',
   rtcpMuxPolicy: 'require',
-  iceCandidatePoolSize: 2,
 };
 
 export function isScreenShareSupported() {
@@ -41,13 +48,6 @@ export function isScreenShareSupported() {
   );
 }
 
-/**
- * @param {object} options
- * @param {string} options.selfId
- * @param {(msg:object)=>void} options.sendSignal
- * @param {(stream:MediaStream, fromId:string)=>void} options.onStream
- * @param {(state:'live'|'stopped'|'lost', info?:object)=>void} options.onStatus
- */
 export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
   /** @type {Map<string, RTCPeerConnection>} */
   const peers = new Map();
@@ -70,33 +70,45 @@ export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
   }
 
   /**
-   * Apply per-track sender parameters: bitrate caps, framerate, and
-   * degradation preference. Without these, WebRTC's defaults can send
-   * far more than a phone on Wi-Fi can receive, which is the usual
-   * cause of laggy screen share.
+   * Tune a sender's encodings.
+   *
+   * Must only be called AFTER setLocalDescription() has run on the
+   * peer connection, or the encodings will be empty and the sender
+   * will never produce RTP.
    */
   async function tuneSender(sender, track) {
+    if (!track) return;
+
     try {
       const params = sender.getParameters();
 
+      // If the browser returned no encodings yet, we cannot set any.
+      // Better to leave the sender with its defaults than to install
+      // an empty encoding slot and silently drop all media.
       if (!params.encodings || params.encodings.length === 0) {
-        params.encodings = [{}];
+        console.log('[WEBRTC] tuneSender: no encoding slots yet for', track.kind);
+        return;
       }
 
       if (track.kind === 'video') {
         params.encodings[0].maxBitrate = CONFIG.SCREEN_VIDEO_BITRATE;
         params.encodings[0].maxFramerate = CONFIG.SCREEN_MAX_FPS;
-        params.encodings[0].networkPriority = 'high';
         params.degradationPreference = 'maintain-framerate';
       } else if (track.kind === 'audio') {
         params.encodings[0].maxBitrate = CONFIG.SCREEN_AUDIO_BITRATE;
-        params.encodings[0].networkPriority = 'high';
       }
 
       await sender.setParameters(params);
+      console.log('[WEBRTC] tuneSender ok:', track.kind, params.encodings[0]);
     } catch (err) {
-      // Not fatal — the browser just keeps its defaults.
-      console.warn('[WEBRTC] Could not tune sender:', err);
+      // Not fatal. The sender will use its default parameters.
+      console.warn('[WEBRTC] tuneSender failed for', track.kind, err);
+    }
+  }
+
+  async function tuneAllSenders(pc) {
+    for (const sender of pc.getSenders()) {
+      await tuneSender(sender, sender.track);
     }
   }
 
@@ -131,13 +143,18 @@ export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
 
     pc.ontrack = (event) => {
       const [stream] = event.streams;
+      console.log('[WEBRTC] ontrack fired on', peerId.slice(0, 8), {
+        kind: event.track.kind,
+        hasStream: !!stream,
+      });
       if (stream) onStream?.(stream, peerId);
     };
 
+    // Add tracks only. Do NOT tune senders here — tuning must wait
+    // until after setLocalDescription.
     if (localStream) {
       for (const track of localStream.getTracks()) {
-        const sender = pc.addTrack(track, localStream);
-        tuneSender(sender, track);
+        pc.addTrack(track, localStream);
       }
     }
 
@@ -158,22 +175,15 @@ export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
 
     let stream = null;
 
-    // ---- First attempt: video + system audio.
+    // ---- First attempt: video + system audio, minimal constraints.
+    // Let the browser choose the resolution and framerate; adding
+    // constraints here is what trips OverconstrainedError on mobile.
     try {
       stream = await navigator.mediaDevices.getDisplayMedia({
-        video: {
-          frameRate: { ideal: CONFIG.SCREEN_MAX_FPS, max: 30 },
-          width: { max: CONFIG.SCREEN_MAX_WIDTH },
-          height: { max: CONFIG.SCREEN_MAX_HEIGHT },
-        },
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-          sampleRate: 48000,
-          channelCount: 2,
-        },
+        video: true,
+        audio: true,
       });
+      console.log('[WEBRTC] getDisplayMedia ok (audio+video)');
     } catch (err) {
       if (err && (err.name === 'NotAllowedError' || err.name === 'AbortError')) {
         throw new Error('Screen sharing was cancelled.');
@@ -186,13 +196,10 @@ export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
     if (!stream) {
       try {
         stream = await navigator.mediaDevices.getDisplayMedia({
-          video: {
-            frameRate: { ideal: CONFIG.SCREEN_MAX_FPS, max: 30 },
-            width: { max: CONFIG.SCREEN_MAX_WIDTH },
-            height: { max: CONFIG.SCREEN_MAX_HEIGHT },
-          },
+          video: true,
           audio: false,
         });
+        console.log('[WEBRTC] getDisplayMedia ok (video only)');
       } catch (err) {
         if (err && (err.name === 'NotAllowedError' || err.name === 'AbortError')) {
           throw new Error('Screen sharing was cancelled.');
@@ -257,6 +264,11 @@ export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
     try {
       const offer = await pc.createOffer({ offerToReceiveVideo: false });
       await pc.setLocalDescription(offer);
+
+      // Now that the peer connection has a local description, the
+      // sender encoding slots exist and setParameters is legal.
+      await tuneAllSenders(pc);
+
       sendSignal({
         to: peerId,
         kind: 'offer',
@@ -276,7 +288,7 @@ export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
     const { from, kind, data } = message;
 
     if (kind === 'offer') {
-      if (sharing) return;
+      if (sharing) return; // only the host offers
       hostId = from;
 
       let pc = peers.get(from);
