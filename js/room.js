@@ -8,29 +8,27 @@
    ----------
    • Live watch state travels over a Realtime broadcast
      channel (`state`) — low latency, no DB write per event.
-   • The host also writes the state to `rooms.state` on a throttle
-     so somebody joining late sees the current position.
+   • The host also writes the state to `rooms.state` on a throttle.
    • Chat uses Postgres changes on `messages` so history persists.
    • WebRTC signalling uses the same broadcast channel (`sig`).
 
    Room lifecycle
    --------------
-   A room is closed by exactly one thing: the host tapping
-   "Leave Room" and confirming. It is NOT closed by page unload,
-   tab switch, refresh, or transient network loss.
+   A room is closed only by the host confirming "Leave Room".
+   It is NOT closed by page unload, tab switch, refresh, or
+   transient network loss.
 
-   If a room IS closed and the host navigates back to it before
-   it expires, they are offered a one-tap "Reopen Room" button.
+   If a room IS closed and the host navigates back before it
+   expires, they are offered a one-tap "Reopen Room" button.
 
    Network resilience
    ------------------
    Every initial database call races a timeout AND retries on
-   failure. `ERR_CONNECTION_RESET` and cold-start latency are both
-   transient on mobile networks and on Supabase's free tier, so a
-   single dropped request must never end the boot sequence.
+   failure. Transient resets and cold-start latency must never
+   end the boot sequence.
    ========================================================= */
 
-console.log('[BUILD] Watch Together BUILD 2026-09-26-F');
+console.log('[BUILD] Watch Together BUILD 2026-09-26-G');
 
 import {
   sb,
@@ -84,14 +82,6 @@ function withSoftTimeout(promise, ms, fallback) {
 
 /* ------------------------------------------------ retrying network calls */
 
-/**
- * Run `fn()` up to `attempts` times. Each attempt races a timeout.
- * Between attempts it backs off 1s, then 2s. On the final failure it
- * re-throws the last error so the caller can show an error screen.
- *
- * `fn` must be idempotent. All calls we retry here are either reads
- * or upserts, so a repeat is always safe.
- */
 async function retryNetwork(fn, label, {
   attempts = 3,
   perAttemptMs = 12000,
@@ -173,6 +163,13 @@ const els = {
   sourceInput: $('#sourceInput'),
   sourceGo: $('#sourceGo'),
   sourceCancel: $('#sourceCancel'),
+
+  ytSearch: $('#ytSearch'),
+  ytSearchForm: $('#ytSearchForm'),
+  ytSearchInput: $('#ytSearchInput'),
+  ytSearchGo: $('#ytSearchGo'),
+  ytSearchNote: $('#ytSearchNote'),
+  ytResults: $('#ytResults'),
 
   playBtn: $('#playBtn'),
   seek: $('#seek'),
@@ -308,6 +305,7 @@ let hostGraceTimer = 0;
 let participantTimer = 0;
 let draggingSeek = false;
 let leaving = false;
+let searchInFlight = false;
 
 const onlineIds = new Set();
 
@@ -471,6 +469,10 @@ async function start() {
   setupChrome();
   console.log('[BOOT 16B] After setupChrome');
 
+  console.log('[BOOT 17A] Before setupYouTubeSearch');
+  setupYouTubeSearch();
+  console.log('[BOOT 17B] After setupYouTubeSearch');
+
   /* ------------------------------------------------- realtime */
 
   console.log('[BOOT 18A] Before openChannelWithRetry');
@@ -604,10 +606,17 @@ function setupScreenShare() {
         if (fromId) player.setBadge(null);
       }
     },
-    onStatus: (state) => {
+    onStatus: (state, info) => {
       if (state === 'live') {
         player.setBadge('SHARING');
-        toast('Screen sharing started.');
+        if (info && info.hasAudio === false) {
+          toast(
+            'Screen is shared without audio. This browser does not capture system audio — try Chrome on desktop.',
+            5200
+          );
+        } else {
+          toast('Screen sharing started.');
+        }
       }
       if (state === 'stopped') {
         player.setBadge(null);
@@ -757,6 +766,161 @@ function setupChrome() {
   });
 }
 
+/* ------------------------------------------------ YouTube search setup */
+
+function setupYouTubeSearch() {
+  if (!CONFIG.YOUTUBE_API_KEY) {
+    els.ytSearchNote.hidden = false;
+  }
+
+  els.ytSearchForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (searchInFlight) return;
+    if (!isHost) {
+      toast('Only the host can change what is playing.');
+      return;
+    }
+
+    const query = els.ytSearchInput.value.trim();
+    if (!query) return;
+
+    await runYouTubeSearch(query);
+  });
+
+  els.ytResults.addEventListener('click', (event) => {
+    const item = event.target.closest('.yt-result');
+    if (!item) return;
+    const videoId = item.dataset.id;
+    if (!videoId) return;
+    loadVideoById(videoId);
+  });
+}
+
+async function runYouTubeSearch(query) {
+  searchInFlight = true;
+  els.ytSearchGo.disabled = true;
+  els.ytSearchGo.textContent = '…';
+  els.ytResults.replaceChildren();
+
+  try {
+    const key = CONFIG.YOUTUBE_API_KEY;
+
+    if (!key) {
+      const url =
+        `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+      window.open(url, '_blank', 'noopener');
+      els.ytSearchNote.hidden = false;
+      toast('Copy a video URL from YouTube back into the paste field.', 5000);
+      return;
+    }
+
+    const url = new URL('https://www.googleapis.com/youtube/v3/search');
+    url.searchParams.set('part', 'snippet');
+    url.searchParams.set('type', 'video');
+    url.searchParams.set('maxResults', '12');
+    url.searchParams.set('q', query);
+    url.searchParams.set('key', key);
+
+    const res = await fetch(url.toString());
+    if (!res.ok) {
+      throw new Error(`YouTube search failed (${res.status}).`);
+    }
+    const data = await res.json();
+    const items = (data.items || [])
+      .filter((it) => it.id && it.id.videoId)
+      .map((it) => ({
+        id: it.id.videoId,
+        title: it.snippet.title,
+        channel: it.snippet.channelTitle,
+        thumb:
+          it.snippet.thumbnails?.default?.url ||
+          `https://i.ytimg.com/vi/${it.id.videoId}/mqdefault.jpg`,
+      }));
+
+    renderSearchResults(items);
+  } catch (err) {
+    console.warn('[YT] Search failed:', err);
+    const empty = document.createElement('p');
+    empty.className = 'yt-empty';
+    empty.textContent =
+      err.message || 'Search failed. Check your connection and try again.';
+    els.ytResults.appendChild(empty);
+  } finally {
+    searchInFlight = false;
+    els.ytSearchGo.disabled = false;
+    els.ytSearchGo.textContent = 'Search';
+  }
+}
+
+function renderSearchResults(items) {
+  els.ytResults.replaceChildren();
+
+  if (!items.length) {
+    const empty = document.createElement('p');
+    empty.className = 'yt-empty';
+    empty.textContent = 'No results.';
+    els.ytResults.appendChild(empty);
+    return;
+  }
+
+  for (const item of items) {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'yt-result';
+    row.dataset.id = item.id;
+    row.setAttribute('role', 'option');
+
+    const img = document.createElement('img');
+    img.className = 'yt-result-thumb';
+    img.src = item.thumb;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.referrerPolicy = 'no-referrer';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'yt-result-text';
+
+    const title = document.createElement('span');
+    title.className = 'yt-result-title';
+    title.textContent = item.title;
+
+    const channel = document.createElement('span');
+    channel.className = 'yt-result-channel';
+    channel.textContent = item.channel;
+
+    wrap.append(title, channel);
+    row.append(img, wrap);
+    els.ytResults.appendChild(row);
+  }
+}
+
+async function loadVideoById(videoId) {
+  if (!isHost) return;
+
+  try {
+    const result = await player.show('youtube', videoId);
+
+    els.ytSearch.hidden = true;
+    els.sourceBar.hidden = true;
+    els.sourceInput.value = '';
+    els.ytSearchInput.value = '';
+    els.ytResults.replaceChildren();
+
+    pushState(
+      {
+        kind: result.kind,
+        src: result.src,
+        playing: false,
+        position: 0,
+        at: Date.now(),
+      },
+      { force: true, persist: true }
+    );
+  } catch (err) {
+    toast(err.message || 'That video could not be loaded.');
+  }
+}
+
 /* ------------------------------------------------------- source handling */
 
 function handleSourceTab(kind) {
@@ -769,16 +933,24 @@ function handleSourceTab(kind) {
     tab.classList.toggle('active', tab.dataset.src === kind);
   }
 
+  els.ytSearch.hidden = true;
+  els.sourceBar.hidden = true;
+
   if (kind === 'screen') {
     toggleScreenShare();
-    els.sourceBar.hidden = true;
     return;
   }
 
   if (kind === 'youtube') {
     els.sourceInput.placeholder = 'YouTube link or video ID';
     els.sourceInput.type = 'text';
-  } else if (kind === 'bilibili') {
+    els.ytSearch.hidden = false;
+    els.sourceBar.hidden = false;
+    els.ytSearchInput.focus();
+    return;
+  }
+
+  if (kind === 'bilibili') {
     els.sourceInput.placeholder = 'Bilibili link (BV…)';
     els.sourceInput.type = 'text';
   } else if (kind === 'website') {
@@ -813,6 +985,7 @@ async function loadFromInput() {
 
     els.sourceBar.hidden = true;
     els.sourceInput.value = '';
+    els.ytSearch.hidden = true;
 
     pushState(
       {
@@ -886,6 +1059,7 @@ function setHostUi() {
   if (!isHost) {
     const active = els.sourceTabs.querySelector('.tab.active');
     if (active) active.classList.remove('active');
+    els.ytSearch.hidden = true;
   }
 
   els.chatHint.textContent = isHost ? 'You are the host' : '';
@@ -1191,9 +1365,6 @@ async function leave({ endRoom = false } = {}) {
 // NOTE: We deliberately do NOT close the room on pagehide. Doing so
 // used to close rooms the host was only navigating away from, which
 // then made `isRoomOpen()` reject the room when the host returned.
-// Host disappearance is handled by the 90-second grace period inside
-// handlePresence(); the room row itself is cleaned up by `expires_at`
-// and the `cleanup_rooms()` SQL function.
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;

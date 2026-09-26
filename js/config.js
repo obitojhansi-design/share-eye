@@ -1,21 +1,9 @@
 /* =========================================================
    js/config.js
    ---------------------------------------------------------
-   Runtime configuration.
-
-   This project is a STATIC site (no bundler), so there is no
-   build step that can inline `.env` values into the browser.
-   Putting secrets in a `.env` file would simply do nothing here.
-   Therefore `js/config.js` is the single source of truth.
-
-   SAFE to ship in client code:
-     - the Supabase project URL
-     - the Supabase anon (public) key
-   These are protected by Row Level Security, not by secrecy.
-
-   NEVER ship in client code:
-     - the Supabase service_role key
-     - any database password
+   Runtime configuration for a STATIC site (no bundler).
+   All values live here; there is no `.env` mechanism in the
+   browser, and pretending otherwise would be a lie.
    ========================================================= */
 
 export const CONFIG = {
@@ -25,26 +13,45 @@ export const CONFIG = {
   // Project Settings → API → "anon public"
   SUPABASE_ANON_KEY: 'sb_publishable_n-I8VgfUDnH3J35KZrLYsw_j1XTn0E5',
 
-  // How long a room may live before it is considered expired.
+  // -----------------------------------------------------------
+  // OPTIONAL — YouTube search inside the room.
+  //
+  // Get a free API key:
+  //   1. console.cloud.google.com
+  //   2. Create project → APIs & Services → Library
+  //   3. Enable "YouTube Data API v3"
+  //   4. Credentials → Create credentials → API key
+  //   5. Restrict the key: "HTTP referrers" → your Vercel domain
+  //
+  // Free quota is 10,000 units/day. search.list costs 100 units,
+  // so ~100 searches/day. Plenty for a 2–3 person room.
+  //
+  // Leave empty to disable in-app search: typing a query will
+  // then open YouTube in a new tab instead.
+  // -----------------------------------------------------------
+  YOUTUBE_API_KEY: '',
+
+  // -----------------------------------------------------------
+  // Screen-share tuning.
+  //  - Lower maxWidth/maxHeight → less bandwidth per peer.
+  //  - Lower maxFramerate → smoother on slow networks.
+  //  - maxBitrate caps the encoder; 900 kbps is a good balance
+  //    for 720p-ish screen content on a home connection.
+  // -----------------------------------------------------------
+  SCREEN_MAX_WIDTH: 1280,
+  SCREEN_MAX_HEIGHT: 720,
+  SCREEN_MAX_FPS: 20,
+  SCREEN_VIDEO_BITRATE: 900_000,
+  SCREEN_AUDIO_BITRATE: 128_000,
+
+  // -----------------------------------------------------------
+  // Room settings
+  // -----------------------------------------------------------
   ROOM_TTL_HOURS: 12,
-
-  // Hard cap. This app is designed for 2–3 people, not a crowd.
   MAX_PARTICIPANTS: 3,
-
-  // How many past chat messages to load when joining.
   CHAT_HISTORY: 60,
-
-  // How often the host persists the watch state to the database.
-  // (Live sync uses Realtime broadcast; the DB copy is only so that
-  //  someone joining late knows what is currently playing.)
   STATE_PERSIST_MS: 8000,
-
-  // How often the host re-broadcasts the current position while playing.
   STATE_HEARTBEAT_MS: 5000,
-
-  // If the host vanishes, wait this long before ending the session.
   HOST_GRACE_MS: 90000,
-
-  // A participant not seen for this long is dropped from the list.
   PARTICIPANT_TIMEOUT_MS: 60000,
 };

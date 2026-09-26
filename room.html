@@ -48,21 +48,12 @@
 
     <div class="yt-wrap" id="ytWrap" hidden><div id="ytPlayer"></div></div>
 
-    <!--
-      Bilibili's official player endpoint is designed to be embedded.
-      We rely on normal cross-origin isolation rather than a sandbox,
-      because the player needs its own cookies and storage to work.
-    -->
     <iframe id="bbFrame" class="frame" hidden title="Bilibili player"
-            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+            allow="fullscreen; picture-in-picture"
             referrerpolicy="no-referrer"></iframe>
 
-    <!--
-      Generic external sites run in a real sandbox, deliberately without
-      `allow-same-origin`, so the frame gets an opaque, unique origin.
-    -->
     <iframe id="webFrame" class="frame" hidden title="Embedded website"
-            allow="autoplay; fullscreen"
+            allow="fullscreen"
             referrerpolicy="no-referrer"
             sandbox="allow-scripts allow-forms allow-popups allow-presentation"></iframe>
 
@@ -90,6 +81,35 @@
     <button class="btn btn-primary btn-sm" type="submit" id="sourceGo">Load</button>
     <button class="btn btn-ghost btn-sm" type="button" id="sourceCancel">Cancel</button>
   </form>
+
+  <!-- ------------------------------------------------------- yt search -->
+  <div class="yt-search" id="ytSearch" hidden>
+    <form class="yt-search-form" id="ytSearchForm" autocomplete="off" novalidate>
+      <input
+        id="ytSearchInput"
+        class="input"
+        type="search"
+        placeholder="Search YouTube…"
+        aria-label="Search YouTube"
+        enterkeyhint="search"
+      >
+      <button class="btn btn-primary btn-sm" type="submit" id="ytSearchGo">
+        Search
+      </button>
+    </form>
+
+    <p class="yt-search-note" id="ytSearchNote" hidden>
+      In-app search needs a YouTube API key. Opening YouTube in a new tab —
+      copy the video URL back into the field above.
+    </p>
+
+    <div
+      class="yt-results"
+      id="ytResults"
+      role="listbox"
+      aria-label="YouTube results"
+    ></div>
+  </div>
 
   <!-- ------------------------------------------------------------ controls -->
   <div class="controls" id="controls">

@@ -3,19 +3,34 @@
    ---------------------------------------------------------
    Host → guest screen sharing over WebRTC.
 
-   Supabase Realtime is used ONLY as the signalling channel
-   (offer / answer / ICE candidates). The video itself travels
-   peer-to-peer and is never uploaded, recorded, or stored.
+   Supabase Realtime is used ONLY as the signalling channel.
+   The video and audio travel peer-to-peer.
 
-   One RTCPeerConnection is created per guest. For 2–3 people
-   that is entirely sufficient; a mesh or SFU would be overkill.
+   Audio
+   -----
+   `getDisplayMedia({ audio: true })` captures tab/system audio
+   on Chrome and Edge desktop, when the user ticks the "Share tab
+   audio" / "Share system audio" checkbox in the picker.
+
+   It does NOT work on:
+     • iOS Safari (any version)
+     • Chrome on Android
+     • Firefox for Android
+   On those, the browser either throws or returns video-only.
+   We retry with `audio: false` so sharing still works, and tell
+   the user via `onStatus('live', { hasAudio: false })`.
    ========================================================= */
+
+import { CONFIG } from './config.js';
 
 const ICE_CONFIG = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
   ],
+  bundlePolicy: 'max-bundle',
+  rtcpMuxPolicy: 'require',
+  iceCandidatePoolSize: 2,
 };
 
 export function isScreenShareSupported() {
@@ -28,10 +43,10 @@ export function isScreenShareSupported() {
 
 /**
  * @param {object} options
- * @param {string} options.selfId        our anonymous client id
+ * @param {string} options.selfId
  * @param {(msg:object)=>void} options.sendSignal
  * @param {(stream:MediaStream, fromId:string)=>void} options.onStream
- * @param {(state:'live'|'stopped'|'lost', peerId?:string)=>void} options.onStatus
+ * @param {(state:'live'|'stopped'|'lost', info?:object)=>void} options.onStatus
  */
 export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
   /** @type {Map<string, RTCPeerConnection>} */
@@ -54,6 +69,37 @@ export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
     for (const id of [...peers.keys()]) closePeer(id);
   }
 
+  /**
+   * Apply per-track sender parameters: bitrate caps, framerate, and
+   * degradation preference. Without these, WebRTC's defaults can send
+   * far more than a phone on Wi-Fi can receive, which is the usual
+   * cause of laggy screen share.
+   */
+  async function tuneSender(sender, track) {
+    try {
+      const params = sender.getParameters();
+
+      if (!params.encodings || params.encodings.length === 0) {
+        params.encodings = [{}];
+      }
+
+      if (track.kind === 'video') {
+        params.encodings[0].maxBitrate = CONFIG.SCREEN_VIDEO_BITRATE;
+        params.encodings[0].maxFramerate = CONFIG.SCREEN_MAX_FPS;
+        params.encodings[0].networkPriority = 'high';
+        params.degradationPreference = 'maintain-framerate';
+      } else if (track.kind === 'audio') {
+        params.encodings[0].maxBitrate = CONFIG.SCREEN_AUDIO_BITRATE;
+        params.encodings[0].networkPriority = 'high';
+      }
+
+      await sender.setParameters(params);
+    } catch (err) {
+      // Not fatal — the browser just keeps its defaults.
+      console.warn('[WEBRTC] Could not tune sender:', err);
+    }
+  }
+
   function makePeer(peerId) {
     const pc = new RTCPeerConnection(ICE_CONFIG);
 
@@ -69,13 +115,20 @@ export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
 
     pc.onconnectionstatechange = () => {
       const state = pc.connectionState;
+      console.log(`[WEBRTC] peer ${peerId.slice(0, 8)} state:`, state);
       if (state === 'failed' || state === 'disconnected' || state === 'closed') {
-        onStatus?.('lost', peerId);
+        onStatus?.('lost', { peerId });
         closePeer(peerId);
       }
     };
 
-    // Guest side: this is where the screen actually arrives.
+    pc.oniceconnectionstatechange = () => {
+      console.log(
+        `[WEBRTC] peer ${peerId.slice(0, 8)} ICE:`,
+        pc.iceConnectionState
+      );
+    };
+
     pc.ontrack = (event) => {
       const [stream] = event.streams;
       if (stream) onStream?.(stream, peerId);
@@ -83,7 +136,8 @@ export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
 
     if (localStream) {
       for (const track of localStream.getTracks()) {
-        pc.addTrack(track, localStream);
+        const sender = pc.addTrack(track, localStream);
+        tuneSender(sender, track);
       }
     }
 
@@ -98,42 +152,82 @@ export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
 
     if (!isScreenShareSupported()) {
       throw new Error(
-        'This browser cannot share the screen. Try Chrome or Safari on a phone, or Chrome on desktop.'
+        'This browser cannot share the screen. Try Chrome or Edge on desktop.'
       );
     }
 
-    let stream;
+    let stream = null;
+
+    // ---- First attempt: video + system audio.
     try {
       stream = await navigator.mediaDevices.getDisplayMedia({
         video: {
-          frameRate: { ideal: 15, max: 24 },
-          width: { max: 1280 },
+          frameRate: { ideal: CONFIG.SCREEN_MAX_FPS, max: 30 },
+          width: { max: CONFIG.SCREEN_MAX_WIDTH },
+          height: { max: CONFIG.SCREEN_MAX_HEIGHT },
         },
-        audio: false,
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          sampleRate: 48000,
+          channelCount: 2,
+        },
       });
     } catch (err) {
       if (err && (err.name === 'NotAllowedError' || err.name === 'AbortError')) {
         throw new Error('Screen sharing was cancelled.');
       }
-      if (err && err.name === 'NotSupportedError') {
-        throw new Error('This device cannot share its screen.');
-      }
-      throw new Error('Screen sharing could not start.');
+      console.warn('[WEBRTC] audio+video getDisplayMedia failed:', err);
+      stream = null;
     }
 
-    localStream = stream;
-    sharing = true;
+    // ---- Second attempt: video only.
+    if (!stream) {
+      try {
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            frameRate: { ideal: CONFIG.SCREEN_MAX_FPS, max: 30 },
+            width: { max: CONFIG.SCREEN_MAX_WIDTH },
+            height: { max: CONFIG.SCREEN_MAX_HEIGHT },
+          },
+          audio: false,
+        });
+      } catch (err) {
+        if (err && (err.name === 'NotAllowedError' || err.name === 'AbortError')) {
+          throw new Error('Screen sharing was cancelled.');
+        }
+        if (err && err.name === 'NotSupportedError') {
+          throw new Error('This device cannot share its screen.');
+        }
+        throw new Error('Screen sharing could not start.');
+      }
+    }
 
-    // If the user stops sharing from the browser's own bar.
+    // ---- Tell the encoder what kind of content this is.
     const [videoTrack] = stream.getVideoTracks();
     if (videoTrack) {
+      try { videoTrack.contentHint = 'motion'; } catch { /* ignore */ }
       videoTrack.addEventListener('ended', () => {
         stop();
         onStatus?.('stopped');
       });
     }
+    for (const audioTrack of stream.getAudioTracks()) {
+      try { audioTrack.contentHint = 'music'; } catch { /* ignore */ }
+    }
 
-    onStatus?.('live');
+    localStream = stream;
+    sharing = true;
+
+    const hasAudio = stream.getAudioTracks().length > 0;
+    console.log('[WEBRTC] Screen share started', {
+      hasAudio,
+      video: stream.getVideoTracks().length,
+      audio: stream.getAudioTracks().length,
+    });
+
+    onStatus?.('live', { hasAudio });
     return stream;
   }
 
@@ -168,7 +262,8 @@ export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
         kind: 'offer',
         data: { type: offer.type, sdp: offer.sdp },
       });
-    } catch {
+    } catch (err) {
+      console.warn('[WEBRTC] Could not create offer:', err);
       closePeer(peerId);
     }
   }
@@ -181,7 +276,6 @@ export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
     const { from, kind, data } = message;
 
     if (kind === 'offer') {
-      // Only the host may offer. Anybody else is ignored.
       if (sharing) return;
       hostId = from;
 
@@ -201,7 +295,8 @@ export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
           kind: 'answer',
           data: { type: answer.type, sdp: answer.sdp },
         });
-      } catch {
+      } catch (err) {
+        console.warn('[WEBRTC] Could not answer offer:', err);
         closePeer(from);
       }
       return;
@@ -242,13 +337,8 @@ export function createScreenShare({ selfId, sendSignal, onStream, onStatus }) {
     onHostLeft,
     closeAllPeers,
 
-    get isSharing() {
-      return sharing;
-    },
-
-    get stream() {
-      return localStream;
-    },
+    get isSharing() { return sharing; },
+    get stream() { return localStream; },
 
     destroy() {
       stop({ notify: false });
