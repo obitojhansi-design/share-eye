@@ -9,6 +9,8 @@
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/room.css">
+<link rel="stylesheet" href="css/reactions.css">
+<link rel="stylesheet" href="css/fullscreen-ui.css">
 </head>
 <body class="room">
 
@@ -64,6 +66,9 @@
 
     <div class="stage-badge" id="stageBadge" hidden></div>
     <div class="stage-note" id="stageNote" hidden></div>
+
+    <!-- Floating emoji reactions are rendered inside this layer. -->
+    <div class="reaction-layer" id="reactionLayer" aria-hidden="true"></div>
 
     <div class="blocker" id="stageBlocker" hidden aria-hidden="true"></div>
   </section>
@@ -128,6 +133,19 @@
       <span class="chat-title">Chat</span>
       <span class="chat-hint" id="chatHint"></span>
     </div>
+
+    <!-- Reaction bar: always visible, small, tappable on mobile. -->
+    <div class="reactions" id="reactionBar" role="toolbar" aria-label="Send a reaction">
+      <button class="reaction-btn" type="button" data-emoji="❤️" aria-label="Love">❤️</button>
+      <button class="reaction-btn" type="button" data-emoji="😂" aria-label="Laugh">😂</button>
+      <button class="reaction-btn" type="button" data-emoji="😮" aria-label="Wow">😮</button>
+      <button class="reaction-btn" type="button" data-emoji="😢" aria-label="Sad">😢</button>
+      <button class="reaction-btn" type="button" data-emoji="👏" aria-label="Clap">👏</button>
+      <button class="reaction-btn" type="button" data-emoji="🔥" aria-label="Fire">🔥</button>
+      <button class="reaction-btn" type="button" data-emoji="👍" aria-label="Thumbs up">👍</button>
+      <button class="reaction-btn" type="button" data-emoji="🎉" aria-label="Celebrate">🎉</button>
+    </div>
+
     <div class="chat-list" id="chatList" role="log" aria-live="polite" aria-relevant="additions"></div>
   </section>
 
@@ -140,6 +158,9 @@
   <footer class="room-foot">
     <button class="btn btn-danger btn-block" id="leaveBtn" type="button">Leave Room</button>
   </footer>
+
+  <!-- Only rendered while the room is fullscreen. -->
+  <button class="fs-exit" id="fsExit" type="button" aria-label="Exit fullscreen">✕</button>
 
 </div>
 

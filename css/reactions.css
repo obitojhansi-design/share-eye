@@ -1,0 +1,104 @@
+/* =========================================================
+   css/reactions.css — floating emoji reactions
+   ---------------------------------------------------------
+   The bar lives inside the chat section, so in fullscreen it
+   naturally appears at the top of the chat sidebar.
+   The floats render inside #reactionLayer, which is an
+   absolutely-positioned overlay inside the stage. It never
+   intercepts pointer events.
+   ========================================================= */
+
+.reactions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  background: rgba(10, 10, 18, 0.55);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.reactions::-webkit-scrollbar {
+  display: none;
+}
+
+.reaction-btn {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition: transform 0.12s ease, background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.reaction-btn:active {
+  transform: scale(0.88);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(124, 92, 255, 0.45);
+}
+
+.reaction-btn:focus-visible {
+  outline: 2px solid var(--accent, #7c5cff);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------- float layer */
+
+.reaction-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.reaction-float {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  font-size: 40px;
+  line-height: 1;
+  transform: translateX(-50%);
+  will-change: transform, opacity;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55));
+  user-select: none;
+  animation: reaction-float 3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes reaction-float {
+  0% {
+    transform: translate(-50%, 12px) scale(0.5);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(-50%, 0) scale(1.15);
+    opacity: 1;
+  }
+  24% {
+    transform: translate(-50%, -10px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -260px) scale(0.9) rotate(var(--drift, 0deg));
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reaction-float {
+    animation-duration: 0.01ms !important;
+  }
+}

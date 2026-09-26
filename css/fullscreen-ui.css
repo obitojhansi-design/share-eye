@@ -1,0 +1,149 @@
+/* =========================================================
+   css/fullscreen-ui.css — fullscreen layout
+   ---------------------------------------------------------
+   When #roomApp is the fullscreen element, the room switches
+   to a two-column grid: the stage takes the majority of the
+   screen, and the chat is a compact sidebar on the right.
+
+   In portrait fullscreen (rare; happens only when the browser
+   refuses an orientation lock), the chat is hidden and the
+   stage fills the screen.
+   ========================================================= */
+
+/* --------------------------------------------------------- exit button */
+
+.fs-exit {
+  display: none;
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  right: calc(10px + env(safe-area-inset-right, 0px));
+  z-index: 9999;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  user-select: none;
+  touch-action: manipulation;
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+
+.fs-exit:active {
+  transform: scale(0.92);
+  background: rgba(0, 0, 0, 0.88);
+}
+
+.fs-exit:focus-visible {
+  outline: 2px solid var(--accent, #7c5cff);
+  outline-offset: 2px;
+}
+
+body.is-fullscreen .fs-exit {
+  display: flex;
+}
+
+/* --------------------------------------------------------- fullscreen layout */
+
+.room-app:fullscreen {
+  display: grid;
+  grid-template-columns: 1fr min(360px, 34vw);
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "stage    chat"
+    "controls composer";
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  background: #000;
+  gap: 0;
+  padding: 0;
+}
+
+.room-app:fullscreen .topbar,
+.room-app:fullscreen .source-tabs,
+.room-app:fullscreen .source-bar,
+.room-app:fullscreen .yt-search,
+.room-app:fullscreen .room-foot {
+  display: none !important;
+}
+
+.room-app:fullscreen .stage {
+  grid-area: stage;
+  aspect-ratio: auto;
+  max-height: none;
+  height: 100%;
+  width: 100%;
+}
+
+.room-app:fullscreen .controls {
+  grid-area: controls;
+  background: rgba(6, 6, 12, 0.92);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 0;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+}
+
+.room-app:fullscreen .chat {
+  grid-area: chat;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(8, 8, 16, 0.96);
+}
+
+.room-app:fullscreen .composer {
+  grid-area: composer;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 8px;
+}
+
+.room-app:fullscreen .reactions {
+  background: rgba(8, 8, 16, 0.6);
+}
+
+/* --------------------------------------------------------- portrait fallback */
+
+@media (orientation: portrait) {
+  .room-app:fullscreen {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+    grid-template-areas:
+      "stage"
+      "controls";
+  }
+
+  .room-app:fullscreen .chat,
+  .room-app:fullscreen .composer {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------- desktop tuning */
+
+@media (min-width: 1024px) {
+  .room-app:fullscreen {
+    grid-template-columns: 1fr min(420px, 30vw);
+  }
+}
+
+/* Override the width cap that room.css applies to .room-app
+   on wide screens; the fullscreen element must span the
+   entire viewport. */
+@media (min-width: 700px) {
+  .room-app:fullscreen {
+    max-width: none;
+    margin: 0;
+    border: 0;
+  }
+}
