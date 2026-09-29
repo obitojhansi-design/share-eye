@@ -2,10 +2,33 @@
    js/room.js  —  room orchestrator
    ---------------------------------------------------------
    Wires together: database, realtime channel, presence,
-   chat, player, screen sharing, reactions, fullscreen.
+   chat, player, and screen sharing.
+
+   Sync model
+   ----------
+   • Live watch state travels over a Realtime broadcast
+     channel (`state`) — low latency, no DB write per event.
+   • The host also writes the state to `rooms.state` on a throttle.
+   • Chat uses Postgres changes on `messages` so history persists.
+   • WebRTC signalling uses the same broadcast channel (`sig`).
+
+   Room lifecycle
+   --------------
+   A room is closed only by the host confirming "Leave Room".
+   It is NOT closed by page unload, tab switch, refresh, or
+   transient network loss.
+
+   If a room IS closed and the host navigates back before it
+   expires, they are offered a one-tap "Reopen Room" button.
+
+   Network resilience
+   ------------------
+   Every initial database call races a timeout AND retries on
+   failure. Transient resets and cold-start latency must never
+   end the boot sequence.
    ========================================================= */
 
-console.log('[BUILD] Watch Together BUILD 2026-09-26-J');
+console.log('[BUILD] Watch Together BUILD 2026-09-26-G');
 
 import {
   sb,
@@ -26,8 +49,6 @@ import { CONFIG } from './config.js';
 import { Player } from './player.js';
 import { createChat } from './chat.js';
 import { createScreenShare, isScreenShareSupported } from './webrtc.js';
-import { createReactions } from './reactions.js';
-import { createFullscreenUI } from './fullscreen-ui.js';
 
 console.log('[BUILD] imports resolved');
 
@@ -156,10 +177,6 @@ const els = {
   timeEnd: $('#timeEnd'),
   muteBtn: $('#muteBtn'),
   fsBtn: $('#fsBtn'),
-  fsExit: $('#fsExit'),
-
-  reactionBar: $('#reactionBar'),
-  reactionLayer: $('#reactionLayer'),
 
   chatList: $('#chatList'),
   chatHint: $('#chatHint'),
@@ -279,8 +296,6 @@ let channel = null;
 let player = null;
 let chat = null;
 let screenShare = null;
-let reactions = null;
-let fullscreenUI = null;
 
 let peerIds = new Set();
 let lastStatePush = 0;
@@ -293,87 +308,6 @@ let leaving = false;
 let searchInFlight = false;
 
 const onlineIds = new Set();
-
-/* -------------------------------------------------- state application */
-
-/**
- * The `screen` kind is signalling-only. The actual video is delivered
- * by the WebRTC stream callback (`onStream` in setupScreenShare),
- * which shows the video element directly. If we let the state
- * broadcast reach the Player, `show('screen', …)` falls through to
- * `setKind('none')` and hides the video that the stream just made
- * visible.
- */
-function applyPlayerState(state) {
-  if (!state) return;
-  if (state.kind === 'screen') return;
-  player.applyState(state).catch(() => {});
-}
-
-/* ------------------------------------------------------ video playback */
-
-/**
- * Robust playback for the remote (guest) video:
- *   1. Try unmuted. Works on desktop and after user interaction.
- *   2. Fall back to muted. Always works, even on iOS Safari.
- *      Show a "tap for sound" button so the user can unmute.
- *   3. If even muted play fails, show "tap to play".
- *
- * Never leaves the button visible when playback has actually started.
- */
-async function attemptPlayback() {
-  const video = els.remoteVideo;
-  if (!video || !video.srcObject) {
-    console.log('[PLAYER] attemptPlayback: no srcObject yet');
-    return;
-  }
-
-  console.log('[PLAYER] attemptPlayback: trying unmuted');
-  video.muted = false;
-
-  try {
-    await video.play();
-    els.tapPlay.hidden = true;
-    console.log('[PLAYER] playing unmuted');
-    return;
-  } catch (err) {
-    console.log('[PLAYER] unmuted autoplay blocked:', err && err.name);
-  }
-
-  console.log('[PLAYER] attemptPlayback: falling back to muted');
-  video.muted = true;
-
-  try {
-    await video.play();
-    els.tapPlay.textContent = '🔊 Tap for sound';
-    els.tapPlay.hidden = false;
-    console.log('[PLAYER] playing muted — awaiting user tap for sound');
-  } catch (err) {
-    els.tapPlay.textContent = '▶ Tap to play';
-    els.tapPlay.hidden = false;
-    console.log('[PLAYER] muted autoplay also blocked:', err && err.name);
-  }
-}
-
-/** Called when the user taps the overlay. Unmutes and hides the button. */
-async function userInitiatedPlay() {
-  const video = els.remoteVideo;
-  if (!video || !video.srcObject) return;
-
-  video.muted = false;
-  try {
-    await video.play();
-    els.tapPlay.hidden = true;
-    console.log('[PLAYER] user resumed playback unmuted');
-  } catch (err) {
-    // Unmuted play was refused even after a gesture; revert to muted
-    // so the user at least sees the picture.
-    video.muted = true;
-    try { await video.play(); } catch { /* ignore */ }
-    els.tapPlay.textContent = '🔊 Tap for sound';
-    console.log('[PLAYER] user unmute refused; staying muted:', err && err.name);
-  }
-}
 
 /* ------------------------------------------------------------ bootstrap */
 
@@ -531,14 +465,6 @@ async function start() {
   setupControls();
   console.log('[BOOT 14B] After setupControls');
 
-  console.log('[BOOT 14.5A] Before setupReactions');
-  setupReactions();
-  console.log('[BOOT 14.5B] After setupReactions');
-
-  console.log('[BOOT 14.6A] Before setupFullscreenUI');
-  setupFullscreenUI();
-  console.log('[BOOT 14.6B] After setupFullscreenUI');
-
   console.log('[BOOT 16A] Before setupChrome');
   setupChrome();
   console.log('[BOOT 16B] After setupChrome');
@@ -563,7 +489,7 @@ async function start() {
   setHostUi();
 
   if (room.state && room.state.kind && room.state.kind !== 'none') {
-    applyPlayerState(room.state);
+    player.applyState(room.state).catch(() => {});
   }
 
   startParticipantHeartbeat();
@@ -666,40 +592,20 @@ function setupScreenShare() {
         payload: { ...message, from: clientId },
       });
     },
-
     onStream: (stream, fromId) => {
-      console.log('[SCREEN] onStream called', {
-        hasStream: !!stream,
-        fromId,
-      });
-
       if (stream) {
         els.remoteVideo.srcObject = stream;
         els.videoWrap.hidden = false;
-        els.tapPlay.hidden = true;
+        els.tapPlay.hidden = false;
         player.setKind('screen');
         player.setBadge('LIVE SCREEN');
-
-        // Log what we actually got.
-        const tracks = stream.getTracks ? stream.getTracks() : [];
-        console.log('[SCREEN] stream tracks:', tracks.map((t) => ({
-          kind: t.kind,
-          enabled: t.enabled,
-          muted: t.muted,
-          readyState: t.readyState,
-        })));
-
-        // Wait a microtask so the video element has had a chance to
-        // attach the stream before we try to play it.
-        setTimeout(() => { attemptPlayback().catch(() => {}); }, 0);
+        attemptPlayback();
       } else {
-        console.log('[SCREEN] onStream: clearing (host stopped)');
         els.remoteVideo.srcObject = null;
         els.tapPlay.hidden = true;
         if (fromId) player.setBadge(null);
       }
     },
-
     onStatus: (state, info) => {
       if (state === 'live') {
         player.setBadge('SHARING');
@@ -716,7 +622,6 @@ function setupScreenShare() {
         player.setBadge(null);
         player.setKind('none');
         player.setEmptySubtitle('Screen sharing has stopped.');
-        els.remoteVideo.srcObject = null;
         pushState({ kind: 'none', src: null, playing: false, position: 0 });
       }
       if (state === 'lost') {
@@ -726,8 +631,19 @@ function setupScreenShare() {
   });
 
   els.tapPlay.addEventListener('click', () => {
-    userInitiatedPlay().catch(() => {});
+    els.tapPlay.hidden = true;
+    attemptPlayback();
   });
+}
+
+function attemptPlayback() {
+  const video = els.remoteVideo;
+  const promise = video.play();
+  if (promise && typeof promise.catch === 'function') {
+    promise.catch(() => {
+      els.tapPlay.hidden = false;
+    });
+  }
 }
 
 /* ------------------------------------------------------- controls setup */
@@ -769,6 +685,22 @@ function setupControls() {
     player.seekTo(target);
   });
 
+  els.fsBtn.addEventListener('click', async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else if (els.stage.requestFullscreen) {
+        await els.stage.requestFullscreen();
+      } else if (els.stage.webkitRequestFullscreen) {
+        els.stage.webkitRequestFullscreen();
+      } else {
+        toast('Fullscreen is not available here.');
+      }
+    } catch {
+      toast('Fullscreen is not available here.');
+    }
+  });
+
   els.sourceTabs.addEventListener('click', (event) => {
     const tab = event.target.closest('.tab');
     if (!tab) return;
@@ -794,49 +726,6 @@ function setupControls() {
     } else {
       leave({ endRoom: false });
     }
-  });
-}
-
-/* ------------------------------------------------------ reactions setup */
-
-function setupReactions() {
-  reactions = createReactions({
-    barEl: els.reactionBar,
-    layerEl: els.reactionLayer,
-    onSend: (emoji) => {
-      if (!emoji) return;
-
-      const payload = {
-        id:
-          (crypto.randomUUID && crypto.randomUUID()) ||
-          String(Date.now()),
-        emoji,
-        name: myName,
-        at: Date.now(),
-      };
-
-      console.log('[REACTION] sending', payload);
-      reactions.show(payload);
-
-      channel?.send({
-        type: 'broadcast',
-        event: 'reaction',
-        payload,
-      });
-    },
-  });
-}
-
-/* ----------------------------------------------------- fullscreen setup */
-
-function setupFullscreenUI() {
-  fullscreenUI = createFullscreenUI({
-    appEl: els.app,
-    toggleBtn: els.fsBtn,
-    exitBtn: els.fsExit,
-    onEnter: () => console.log('[FULLSCREEN] entered'),
-    onExit: () => console.log('[FULLSCREEN] exited'),
-    onError: (msg) => toast(msg || 'Fullscreen is not available.'),
   });
 }
 
@@ -1123,23 +1012,8 @@ async function toggleScreenShare() {
 
   try {
     await screenShare.start();
-    const stream = screenShare.stream;
-    console.log('[SCREEN] host started sharing', {
-      hasStream: !!stream,
-      tracks: stream ? stream.getTracks().map((t) => t.kind) : [],
-    });
-
-    // Give the host a muted preview of what they are sharing.
-    if (stream) {
-      els.remoteVideo.srcObject = stream;
-      els.remoteVideo.muted = true;
-      els.videoWrap.hidden = false;
-      els.tapPlay.hidden = true;
-      try { await els.remoteVideo.play(); } catch { /* ignore */ }
-    }
 
     for (const peerId of peerIds) {
-      console.log('[SCREEN] connecting to peer', peerId);
       await screenShare.connectTo(peerId);
     }
 
@@ -1262,13 +1136,12 @@ function openChannel() {
     attach('broadcast:state', () => {
       channel.on('broadcast', { event: 'state' }, ({ payload }) => {
         if (isHost) return;
-        applyPlayerState(payload);
+        player.applyState(payload).catch(() => {});
       });
     });
 
     attach('broadcast:sig', () => {
       channel.on('broadcast', { event: 'sig' }, ({ payload }) => {
-        console.log('[SIG] received', payload && payload.kind);
         screenShare?.handleSignal(payload);
       });
     });
@@ -1277,13 +1150,6 @@ function openChannel() {
       channel.on('broadcast', { event: 'notice' }, ({ payload }) => {
         if (!payload?.text) return;
         chat.system(payload.text);
-      });
-    });
-
-    attach('broadcast:reaction', () => {
-      channel.on('broadcast', { event: 'reaction' }, ({ payload }) => {
-        console.log('[REACTION] received', payload);
-        reactions?.show(payload);
       });
     });
 
@@ -1453,8 +1319,6 @@ function endSession(reason) {
 
   try { screenShare?.destroy(); } catch { /* ignore */ }
   try { player?.destroy(); } catch { /* ignore */ }
-  try { reactions?.destroy(); } catch { /* ignore */ }
-  try { fullscreenUI?.destroy(); } catch { /* ignore */ }
 
   toast(reason, 3000);
 
@@ -1473,8 +1337,6 @@ async function leave({ endRoom = false } = {}) {
 
   try { screenShare?.destroy(); } catch { /* ignore */ }
   try { player?.destroy(); } catch { /* ignore */ }
-  try { reactions?.destroy(); } catch { /* ignore */ }
-  try { fullscreenUI?.destroy(); } catch { /* ignore */ }
 
   if (channel) {
     if (endRoom) {
@@ -1499,6 +1361,10 @@ async function leave({ endRoom = false } = {}) {
 }
 
 /* ---------------------------------------------------------- last rites */
+
+// NOTE: We deliberately do NOT close the room on pagehide. Doing so
+// used to close rooms the host was only navigating away from, which
+// then made `isRoomOpen()` reject the room when the host returned.
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
