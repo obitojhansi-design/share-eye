@@ -4,607 +4,556 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#08080f">
-<meta name="description" content="A tiny private room where two or three people watch the same YouTube video at the same time.">
+<meta name="description" content="A tiny private YouTube room for two or three.">
 <title>Watch Together — private rooms</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%237c5cff'/%3E%3Cpath d='M8 6v12l10-6-10-6z' fill='white'/%3E%3C/svg%3E">
 <style>
-  /* =========================================================
-     Base
-     ========================================================= */
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  [hidden]{display:none!important}
-  html,body{height:100%}
+/* =========================================================
+   Base
+   ========================================================= */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{height:100%}
 
-  :root{
-    --bg:#08080f;
-    --bg-soft:#0e0e1a;
-    --text:#f2f2ff;
-    --muted:#9a9ab5;
-    --accent:#7c5cff;
-    --accent-2:#4f8cff;
-    --danger:#ff5c5c;
-    --ok:#4ade80;
-    --radius:18px;
-    --radius-sm:14px;
-    --shadow:0 8px 32px rgba(0,0,0,.35);
-    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  }
+:root{
+  --bg:#08080f;
+  --bg-soft:#0e0e1a;
+  --text:#f2f2ff;
+  --muted:#9a9ab5;
+  --accent:#7c5cff;
+  --accent-2:#4f8cff;
+  --danger:#ff5c5c;
+  --ok:#4ade80;
+  --radius:18px;
+  --radius-sm:14px;
+  --shadow:0 8px 32px rgba(0,0,0,.35);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
 
-  body{
-    font-family:var(--font);
-    background:var(--bg);
-    color:var(--text);
-    line-height:1.5;
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-    overscroll-behavior-y:none;
-  }
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  overscroll-behavior-y:none;
+}
 
-  input,button,textarea,select{font-size:16px;font-family:inherit}
+input,button,textarea,select{font-size:16px;font-family:inherit}
 
-  /* =========================================================
-     Landing
-     ========================================================= */
-  body.landing{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    min-height:100dvh;
-    min-height:100svh;
-    padding:24px 16px calc(24px + env(safe-area-inset-bottom,0px));
-    overflow-x:hidden;
-    position:relative;
-  }
+/* =========================================================
+   Landing
+   ========================================================= */
+body.landing{
+  display:flex;align-items:center;justify-content:center;
+  min-height:100dvh;min-height:100svh;
+  padding:24px 16px calc(24px + env(safe-area-inset-bottom,0px));
+  overflow-x:hidden;position:relative;
+}
+.bg-glow{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(60% 50% at 15% 10%, rgba(124,92,255,.18), transparent 70%),
+    radial-gradient(55% 45% at 90% 20%, rgba(79,140,255,.16), transparent 70%),
+    radial-gradient(70% 60% at 50% 100%, rgba(124,92,255,.10), transparent 70%);
+}
+.landing-wrap{
+  position:relative;z-index:1;width:100%;max-width:440px;
+  display:flex;flex-direction:column;gap:16px;
+}
+.brand{text-align:center;padding:8px 0 4px}
+.brand-mark{
+  width:52px;height:52px;margin:0 auto 12px;
+  border-radius:16px;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  box-shadow:0 10px 30px rgba(124,92,255,.35);
+}
+.brand-name{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.brand-tag{margin-top:6px;font-size:14.5px;color:var(--muted)}
 
-  .bg-glow{
-    position:fixed;inset:0;z-index:0;pointer-events:none;
-    background:
-      radial-gradient(60% 50% at 15% 10%, rgba(124,92,255,.18), transparent 70%),
-      radial-gradient(55% 45% at 90% 20%, rgba(79,140,255,.16), transparent 70%),
-      radial-gradient(70% 60% at 50% 100%, rgba(124,92,255,.10), transparent 70%);
-  }
+.card{padding:18px;border-radius:var(--radius)}
+.glass{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+}
 
-  .landing-wrap{
-    position:relative;z-index:1;
-    width:100%;max-width:440px;
-    display:flex;flex-direction:column;gap:16px;
-  }
+.field{display:block}
+.field-label{
+  display:block;font-size:12px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px;
+}
+.field-help{margin-top:8px;font-size:12.5px;color:var(--muted)}
 
-  .brand{text-align:center;padding:8px 0 4px}
-  .brand-mark{
-    width:52px;height:52px;margin:0 auto 12px;
-    border-radius:16px;display:grid;place-items:center;
-    color:#fff;
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    box-shadow:0 10px 30px rgba(124,92,255,.35);
-  }
-  .brand-name{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
-  .brand-tag{margin-top:6px;font-size:14.5px;color:var(--muted)}
+.input{
+  width:100%;min-height:50px;padding:14px 16px;
+  border-radius:var(--radius-sm);
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.35);
+  color:#fff;font-size:16px;outline:none;
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+.input::placeholder{color:#6f6f8d}
+.input:focus{
+  border-color:rgba(124,92,255,.7);
+  box-shadow:0 0 0 3px rgba(124,92,255,.22);
+}
+.code-input{
+  text-align:center;text-transform:uppercase;
+  letter-spacing:.35em;font-weight:800;font-size:20px;
+  padding:16px 12px;background:rgba(0,0,0,.5);
+  border-color:rgba(255,255,255,.16);
+  caret-color:var(--accent);
+}
 
-  .card{padding:18px;border-radius:var(--radius)}
-  .glass{
-    background:rgba(255,255,255,.05);
-    border:1px solid rgba(255,255,255,.10);
-    box-shadow:var(--shadow);
-    backdrop-filter:blur(14px) saturate(140%);
-    -webkit-backdrop-filter:blur(14px) saturate(140%);
-  }
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:50px;padding:14px 18px;
+  border-radius:var(--radius-sm);
+  border:1px solid transparent;
+  font-family:inherit;font-size:16px;font-weight:700;
+  color:#fff;cursor:pointer;text-decoration:none;
+  user-select:none;touch-action:manipulation;
+  transition:transform .12s ease, background .15s ease,
+    border-color .15s ease, opacity .15s ease;
+}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  box-shadow:0 8px 24px rgba(80,100,255,.32);
+}
+.btn-ghost{
+  background:rgba(255,255,255,.07);
+  border-color:rgba(255,255,255,.14);
+}
+.btn-danger{
+  background:rgba(255,60,60,.12);
+  border-color:rgba(255,80,80,.35);
+  color:#ffb4b4;
+}
+.btn-sm{min-height:42px;padding:10px 14px;font-size:15px}
+.btn-block{width:100%}
+.btn-send{width:auto;min-width:84px;padding:0 18px}
+.btn-ico{font-size:18px;line-height:1}
 
-  .field{display:block}
-  .field-label{
-    display:block;font-size:12px;font-weight:700;
-    letter-spacing:.08em;text-transform:uppercase;
-    color:var(--muted);margin-bottom:8px;
-  }
-  .field-help{margin-top:8px;font-size:12.5px;color:var(--muted)}
+.join-row{display:flex;gap:10px;align-items:stretch}
+.join-row .input{flex:1;min-width:0}
+.join-row .btn{width:auto;min-width:92px}
 
-  .input{
-    width:100%;min-height:50px;
-    padding:14px 16px;border-radius:var(--radius-sm);
-    border:1px solid rgba(255,255,255,.12);
-    background:rgba(0,0,0,.35);
-    color:#fff;font-size:16px;outline:none;
-    transition:border-color .15s ease, box-shadow .15s ease;
-  }
-  .input::placeholder{color:#6f6f8d}
-  .input:focus{
-    border-color:rgba(124,92,255,.7);
-    box-shadow:0 0 0 3px rgba(124,92,255,.22);
-  }
+.divider{
+  display:flex;align-items:center;gap:12px;
+  margin:18px 0;color:var(--muted);
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+}
+.divider::before,.divider::after{
+  content:"";flex:1;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
+}
 
-  .code-input{
-    text-align:center;text-transform:uppercase;
-    letter-spacing:.35em;font-weight:800;font-size:20px;
-    padding:16px 12px;
-    background:rgba(0,0,0,.5);
-    border-color:rgba(255,255,255,.16);
-    caret-color:var(--accent);
-  }
+.status{min-height:22px;margin-top:8px;text-align:center;font-size:14px;color:#ffb4b4}
+.status.ok{color:#b9ffd0}
 
-  .btn{
-    display:inline-flex;align-items:center;justify-content:center;gap:8px;
-    min-height:50px;padding:14px 18px;
-    border-radius:var(--radius-sm);
-    border:1px solid transparent;
-    font-family:inherit;font-size:16px;font-weight:700;
-    color:#fff;cursor:pointer;text-decoration:none;
-    user-select:none;touch-action:manipulation;
-    transition:transform .12s ease, background .15s ease,
-      border-color .15s ease, opacity .15s ease;
-  }
-  .btn:active{transform:scale(.98)}
-  .btn:disabled{opacity:.45;cursor:not-allowed}
-  .btn-primary{
-    background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    box-shadow:0 8px 24px rgba(80,100,255,.32);
-  }
-  .btn-ghost{
-    background:rgba(255,255,255,.07);
-    border-color:rgba(255,255,255,.14);
-  }
-  .btn-danger{
-    background:rgba(255,60,60,.12);
-    border-color:rgba(255,80,80,.35);
-    color:#ffb4b4;
-  }
-  .btn-sm{min-height:42px;padding:10px 14px;font-size:15px}
-  .btn-block{width:100%}
-  .btn-send{width:auto;min-width:84px;padding:0 18px}
-  .btn-ico{font-size:18px;line-height:1}
+.footnote{
+  margin-top:18px;padding:0 8px;text-align:center;
+  font-size:12.5px;color:var(--muted);line-height:1.5;
+}
 
-  .join-row{display:flex;gap:10px;align-items:stretch}
-  .join-row .input{flex:1;min-width:0}
-  .join-row .btn{width:auto;min-width:92px}
+/* =========================================================
+   Toast
+   ========================================================= */
+.toast{
+  position:fixed;left:50%;
+  bottom:calc(18px + env(safe-area-inset-bottom,0px));
+  transform:translateX(-50%) translateY(20px);
+  max-width:calc(100vw - 32px);
+  padding:12px 18px;border-radius:999px;
+  background:rgba(18,18,30,.94);
+  border:1px solid rgba(255,255,255,.12);
+  color:#fff;font-size:14px;text-align:center;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  opacity:0;pointer-events:none;
+  transition:opacity .25s ease, transform .25s ease;
+  z-index:9999;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-  .divider{
-    display:flex;align-items:center;gap:12px;
-    margin:18px 0;color:var(--muted);
-    font-size:12px;letter-spacing:.08em;text-transform:uppercase;
-  }
-  .divider::before,.divider::after{
-    content:"";flex:1;height:1px;
-    background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
-  }
+/* =========================================================
+   Room shell
+   ========================================================= */
+body.room{height:100dvh;height:100svh;overflow:hidden;background:var(--bg)}
 
-  .status{
-    min-height:22px;margin-top:8px;text-align:center;
-    font-size:14px;color:#ffb4b4;
-  }
-  .status.ok{color:#b9ffd0}
+.room-app{
+  display:flex;flex-direction:column;
+  height:100dvh;height:100svh;
+  width:100%;max-width:100%;overflow:hidden;
+  background:var(--bg-soft);position:relative;
+}
 
-  .footnote{
-    margin-top:18px;padding:0 8px;text-align:center;
-    font-size:12.5px;color:var(--muted);line-height:1.5;
-  }
+/* Boot */
+.boot{
+  position:fixed;inset:0;z-index:5000;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;
+  padding:24px;background:var(--bg);
+}
+.boot.is-error .spinner{display:none}
+.boot.is-error .boot-text{color:#f2f2ff;font-weight:600;max-width:32ch}
+.boot-text{font-size:16px;color:var(--muted);text-align:center;max-width:32ch}
+.spinner{
+  width:36px;height:36px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.12);
+  border-top-color:var(--accent);
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-  /* =========================================================
-     Toast
-     ========================================================= */
-  .toast{
-    position:fixed;left:50%;
-    bottom:calc(18px + env(safe-area-inset-bottom,0px));
-    transform:translateX(-50%) translateY(20px);
-    max-width:calc(100vw - 32px);
-    padding:12px 18px;border-radius:999px;
-    background:rgba(18,18,30,.94);
-    border:1px solid rgba(255,255,255,.12);
-    color:#fff;font-size:14px;text-align:center;
-    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    opacity:0;pointer-events:none;
-    transition:opacity .25s ease, transform .25s ease;
-    z-index:9999;
-  }
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* Topbar */
+.topbar{
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+  padding:10px 12px;
+  padding-top:calc(10px + env(safe-area-inset-top,0px));
+  background:rgba(10,10,18,.85);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  z-index:20;
+}
+.icon-btn{
+  width:44px;height:44px;flex-shrink:0;
+  display:grid;place-items:center;
+  border-radius:var(--radius-sm);
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.06);
+  color:#fff;font-size:18px;cursor:pointer;
+  text-decoration:none;transition:background .15s ease;
+}
+.icon-btn:active{background:rgba(255,255,255,.12)}
 
-  /* =========================================================
-     Room shell
-     ========================================================= */
-  body.room{
-    height:100dvh;height:100svh;
-    overflow:hidden;background:var(--bg);
-  }
+.code-chip{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:1px;
+  padding:6px 10px;border-radius:var(--radius-sm);
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.05);
+  color:#fff;cursor:pointer;font-family:inherit;
+  transition:background .15s ease;
+}
+.code-chip:active{background:rgba(255,255,255,.12)}
+.code-label{
+  font-size:10px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);
+}
+.code-value{
+  font-size:20px;font-weight:800;letter-spacing:.18em;
+  font-variant-numeric:tabular-nums;line-height:1.1;
+}
 
-  .room-app{
-    display:flex;flex-direction:column;
-    height:100dvh;height:100svh;
-    width:100%;max-width:100%;overflow:hidden;
-    background:var(--bg-soft);
-    position:relative;
-  }
+.online-chip{
+  display:flex;align-items:center;gap:6px;flex-shrink:0;
+  padding:9px 12px;border-radius:999px;
+  border:1px solid rgba(80,255,140,.25);
+  background:rgba(80,255,140,.10);
+  color:#b9ffd0;font-size:14px;font-weight:700;
+}
+.online-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--ok);box-shadow:0 0 8px var(--ok);
+}
 
-  /* Boot */
-  .boot{
-    position:fixed;inset:0;z-index:5000;
-    display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:16px;
-    padding:24px;background:var(--bg);
-  }
-  .boot.is-error .spinner{display:none}
-  .boot.is-error .boot-text{color:#f2f2ff;font-weight:600;max-width:32ch}
-  .boot-text{font-size:16px;color:var(--muted);text-align:center;max-width:32ch}
-  .spinner{
-    width:36px;height:36px;border-radius:50%;
-    border:3px solid rgba(255,255,255,.12);
-    border-top-color:var(--accent);
-    animation:spin .8s linear infinite;
-  }
-  @keyframes spin{to{transform:rotate(360deg)}}
+/* Stage */
+.stage{
+  position:relative;flex-shrink:0;
+  width:100%;aspect-ratio:16/9;max-height:42dvh;
+  background:#000;overflow:hidden;
+}
+.stage-empty{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:4px;
+  padding:20px;text-align:center;color:var(--muted);
+}
+.stage-empty-title{font-size:16px;font-weight:700;color:#ddd}
+.stage-empty-sub{font-size:13.5px}
 
-  /* Topbar */
-  .topbar{
-    display:flex;align-items:center;gap:8px;flex-shrink:0;
-    padding:10px 12px;
-    padding-top:calc(10px + env(safe-area-inset-top,0px));
-    background:rgba(10,10,18,.85);
-    border-bottom:1px solid rgba(255,255,255,.06);
-    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-    z-index:20;
-  }
-  .icon-btn{
-    width:44px;height:44px;flex-shrink:0;
-    display:grid;place-items:center;
-    border-radius:var(--radius-sm);
-    border:1px solid rgba(255,255,255,.10);
-    background:rgba(255,255,255,.06);
-    color:#fff;font-size:18px;cursor:pointer;
-    text-decoration:none;
-    transition:background .15s ease;
-  }
-  .icon-btn:active{background:rgba(255,255,255,.12)}
+#ytWrap{position:absolute;inset:0;width:100%;height:100%}
+#ytPlayer,#ytPlayer iframe{width:100%;height:100%;border:0}
 
-  .code-chip{
-    flex:1;min-width:0;
-    display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:1px;
-    padding:6px 10px;border-radius:var(--radius-sm);
-    border:1px solid rgba(255,255,255,.10);
-    background:rgba(255,255,255,.05);
-    color:#fff;cursor:pointer;font-family:inherit;
-    transition:background .15s ease;
-  }
-  .code-chip:active{background:rgba(255,255,255,.12)}
-  .code-label{
-    font-size:10px;font-weight:700;letter-spacing:.16em;
-    text-transform:uppercase;color:var(--muted);
-  }
-  .code-value{
-    font-size:20px;font-weight:800;letter-spacing:.18em;
-    font-variant-numeric:tabular-nums;line-height:1.1;
-  }
+.tap-play{
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);z-index:5;
+  padding:14px 22px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.20);
+  background:rgba(0,0,0,.75);color:#fff;
+  font-size:16px;font-weight:700;cursor:pointer;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  animation:floatPulse 2s ease-in-out infinite;
+}
+@keyframes floatPulse{
+  0%,100%{transform:translate(-50%,-50%) scale(1)}
+  50%{transform:translate(-50%,-50%) scale(1.05)}
+}
 
-  .online-chip{
-    display:flex;align-items:center;gap:6px;flex-shrink:0;
-    padding:9px 12px;border-radius:999px;
-    border:1px solid rgba(80,255,140,.25);
-    background:rgba(80,255,140,.10);
-    color:#b9ffd0;font-size:14px;font-weight:700;
-  }
-  .online-dot{
-    width:8px;height:8px;border-radius:50%;
-    background:var(--ok);box-shadow:0 0 8px var(--ok);
-  }
+/* Source bar */
+.source-bar{
+  display:flex;gap:8px;flex-shrink:0;
+  padding:8px 10px;
+  background:rgba(10,10,18,.65);
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.source-bar .input{
+  flex:1;min-width:0;min-height:42px;
+  padding:10px 12px;font-size:14px;
+}
+.source-bar .btn{width:auto;min-height:42px;padding:0 14px;font-size:14px}
 
-  /* Stage */
-  .stage{
-    position:relative;flex-shrink:0;
-    width:100%;aspect-ratio:16/9;
-    max-height:42dvh;
-    background:#000;overflow:hidden;
-  }
-  .stage-empty{
-    position:absolute;inset:0;
-    display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:4px;
-    padding:20px;text-align:center;color:var(--muted);
-  }
-  .stage-empty-title{font-size:16px;font-weight:700;color:#ddd}
-  .stage-empty-sub{font-size:13.5px}
+/* Controls */
+.controls{
+  display:flex;align-items:center;gap:6px;flex-shrink:0;
+  padding:6px 10px;
+  background:rgba(10,10,18,.75);
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.ctl{
+  width:40px;height:40px;flex-shrink:0;
+  display:grid;place-items:center;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.06);
+  color:#fff;font-size:16px;cursor:pointer;
+  transition:background .15s ease;
+}
+.ctl:active:not(:disabled){background:rgba(255,255,255,.12)}
+.ctl:disabled{opacity:.35;cursor:not-allowed}
+.time{
+  min-width:36px;flex-shrink:0;text-align:center;
+  font-size:12px;color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+.seek{flex:1;min-width:0;height:24px;accent-color:var(--accent)}
+.seek:disabled{opacity:.35}
 
-  #ytWrap{
-    position:absolute;inset:0;
-    width:100%;height:100%;
-  }
-  #ytPlayer,#ytPlayer iframe{
-    width:100%;height:100%;border:0;
-  }
+/* Chat */
+.chat{
+  flex:1 1 auto;min-height:0;
+  display:flex;flex-direction:column;
+  background:rgba(8,8,16,.55);
+}
+.chat-head{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;padding:8px 14px;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.chat-title{
+  font-size:13px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);
+}
+.chat-hint{font-size:12px;color:var(--muted)}
 
-  .tap-play{
-    position:absolute;left:50%;top:50%;
-    transform:translate(-50%,-50%);
-    z-index:5;
-    padding:14px 22px;border-radius:999px;
-    border:1px solid rgba(255,255,255,.20);
-    background:rgba(0,0,0,.75);
-    color:#fff;font-size:16px;font-weight:700;
-    cursor:pointer;
-    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-    animation:floatPulse 2s ease-in-out infinite;
-  }
-  @keyframes floatPulse{
-    0%,100%{transform:translate(-50%,-50%) scale(1)}
-    50%{transform:translate(-50%,-50%) scale(1.05)}
-  }
+.chat-list{
+  flex:1;min-height:0;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:8px;
+  padding:10px 14px;
+}
+.chat-list::-webkit-scrollbar{width:6px}
+.chat-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:99px}
 
-  /* Source bar */
-  .source-bar{
-    display:flex;gap:8px;flex-shrink:0;
-    padding:8px 10px;
-    background:rgba(10,10,18,.65);
-    border-bottom:1px solid rgba(255,255,255,.05);
-  }
-  .source-bar .input{
-    flex:1;min-width:0;min-height:42px;
-    padding:10px 12px;font-size:14px;
-  }
-  .source-bar .btn{
-    width:auto;min-height:42px;padding:0 14px;font-size:14px;
-  }
+.msg{
+  max-width:85%;align-self:flex-start;
+  padding:8px 12px;border-radius:16px;
+  border:1px solid rgba(255,255,255,.06);
+  background:rgba(255,255,255,.07);
+  font-size:14.5px;line-height:1.4;
+  overflow-wrap:anywhere;word-wrap:break-word;
+}
+.msg.me{
+  align-self:flex-end;
+  background:linear-gradient(135deg,rgba(124,92,255,.35),rgba(79,140,255,.35));
+  border-color:rgba(124,92,255,.40);
+}
+.msg .who{
+  display:block;margin-bottom:2px;
+  font-size:11px;font-weight:800;
+  letter-spacing:.04em;text-transform:uppercase;
+  color:var(--muted);
+}
+.msg.me .who{color:#d9ccff}
+.msg .body{color:#f2f2ff}
+.msg .time{
+  display:block;margin-top:4px;text-align:right;
+  font-size:10.5px;color:var(--muted);
+}
+.msg.sys{
+  align-self:center;max-width:92%;
+  background:rgba(255,255,255,.04);
+  border-color:transparent;color:var(--muted);
+  font-size:12.5px;text-align:center;border-radius:999px;
+}
 
-  /* Controls */
-  .controls{
-    display:flex;align-items:center;gap:6px;flex-shrink:0;
-    padding:6px 10px;
-    background:rgba(10,10,18,.75);
-    border-bottom:1px solid rgba(255,255,255,.05);
-  }
-  .ctl{
-    width:40px;height:40px;flex-shrink:0;
-    display:grid;place-items:center;
-    border-radius:12px;
-    border:1px solid rgba(255,255,255,.10);
-    background:rgba(255,255,255,.06);
-    color:#fff;font-size:16px;cursor:pointer;
-    transition:background .15s ease;
-  }
-  .ctl:active:not(:disabled){background:rgba(255,255,255,.12)}
-  .ctl:disabled{opacity:.35;cursor:not-allowed}
-  .time{
-    min-width:36px;flex-shrink:0;text-align:center;
-    font-size:12px;color:var(--muted);
-    font-variant-numeric:tabular-nums;
-  }
-  .seek{
-    flex:1;min-width:0;height:24px;
-    accent-color:var(--accent);
-  }
-  .seek:disabled{opacity:.35}
+/* Composer */
+.composer{
+  display:flex;gap:8px;flex-shrink:0;
+  padding:8px 10px;
+  padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));
+  background:rgba(10,10,18,.90);
+  border-top:1px solid rgba(255,255,255,.06);
+}
+.composer .input{
+  flex:1;min-width:0;min-height:48px;
+  padding:12px 14px;font-size:16px;
+}
+.room-foot{
+  flex-shrink:0;padding:10px 14px;
+  padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  background:rgba(10,10,18,.95);
+  border-top:1px solid rgba(255,255,255,.06);
+}
 
-  /* Chat */
-  .chat{
-    flex:1 1 auto;min-height:0;
-    display:flex;flex-direction:column;
-    background:rgba(8,8,16,.55);
-  }
-  .chat-head{
-    display:flex;align-items:center;justify-content:space-between;
-    flex-shrink:0;padding:8px 14px;
-    border-bottom:1px solid rgba(255,255,255,.05);
-  }
-  .chat-title{
-    font-size:13px;font-weight:800;letter-spacing:.08em;
-    text-transform:uppercase;color:var(--muted);
-  }
-  .chat-hint{font-size:12px;color:var(--muted)}
+/* Reactions */
+.reactions{
+  display:flex;gap:4px;flex-shrink:0;
+  padding:6px 10px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  background:rgba(10,10,18,.55);
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.reactions::-webkit-scrollbar{display:none}
+.reaction-btn{
+  flex:0 0 auto;width:40px;height:40px;
+  display:grid;place-items:center;padding:0;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.06);
+  color:#fff;font-size:20px;line-height:1;
+  cursor:pointer;user-select:none;
+  touch-action:manipulation;
+  transition:transform .12s ease, background .15s ease;
+}
+.reaction-btn:active{transform:scale(.88);background:rgba(255,255,255,.16)}
 
-  .chat-list{
-    flex:1;min-height:0;overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-    display:flex;flex-direction:column;gap:8px;
-    padding:10px 14px;
-  }
-  .chat-list::-webkit-scrollbar{width:6px}
-  .chat-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:99px}
+.reaction-layer{
+  position:absolute;inset:0;overflow:hidden;
+  pointer-events:none;z-index:6;
+}
+.reaction-float{
+  position:absolute;bottom:8%;left:50%;
+  font-size:40px;line-height:1;
+  transform:translateX(-50%);
+  will-change:transform, opacity;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.55));
+  user-select:none;
+  animation:reactionFloat 3s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes reactionFloat{
+  0%{transform:translate(-50%,12px) scale(.5);opacity:0}
+  12%{transform:translate(-50%,0) scale(1.15);opacity:1}
+  24%{transform:translate(-50%,-10px) scale(1);opacity:1}
+  100%{transform:translate(-50%,-260px) scale(.9) rotate(var(--drift,0deg));opacity:0}
+}
 
-  .msg{
-    max-width:85%;align-self:flex-start;
-    padding:8px 12px;border-radius:16px;
-    border:1px solid rgba(255,255,255,.06);
-    background:rgba(255,255,255,.07);
-    font-size:14.5px;line-height:1.4;
-    overflow-wrap:anywhere;word-wrap:break-word;
-  }
-  .msg.me{
-    align-self:flex-end;
-    background:linear-gradient(135deg,rgba(124,92,255,.35),rgba(79,140,255,.35));
-    border-color:rgba(124,92,255,.40);
-  }
-  .msg .who{
-    display:block;margin-bottom:2px;
-    font-size:11px;font-weight:800;
-    letter-spacing:.04em;text-transform:uppercase;
-    color:var(--muted);
-  }
-  .msg.me .who{color:#d9ccff}
-  .msg .body{color:#f2f2ff}
-  .msg .time{
-    display:block;margin-top:4px;text-align:right;
-    font-size:10.5px;color:var(--muted);
-  }
-  .msg.sys{
-    align-self:center;max-width:92%;
-    background:rgba(255,255,255,.04);
-    border-color:transparent;color:var(--muted);
-    font-size:12.5px;text-align:center;border-radius:999px;
-  }
+/* Fullscreen */
+.fs-exit{
+  display:none;position:fixed;
+  top:calc(10px + env(safe-area-inset-top,0px));
+  right:calc(10px + env(safe-area-inset-right,0px));
+  z-index:9999;width:44px;height:44px;
+  align-items:center;justify-content:center;padding:0;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.20);
+  background:rgba(0,0,0,.72);color:#fff;
+  font-size:18px;font-weight:700;line-height:1;cursor:pointer;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 6px 18px rgba(0,0,0,.45);
+  user-select:none;touch-action:manipulation;
+  transition:transform .12s ease, background .15s ease;
+}
+.fs-exit:active{transform:scale(.92);background:rgba(0,0,0,.88)}
+body.is-fullscreen .fs-exit{display:flex}
 
-  /* Composer */
-  .composer{
-    display:flex;gap:8px;flex-shrink:0;
-    padding:8px 10px;
-    padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));
-    background:rgba(10,10,18,.90);
-    border-top:1px solid rgba(255,255,255,.06);
-  }
-  .composer .input{
-    flex:1;min-width:0;min-height:48px;
-    padding:12px 14px;font-size:16px;
-  }
-  .room-foot{
-    flex-shrink:0;padding:10px 14px;
-    padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
-    background:rgba(10,10,18,.95);
-    border-top:1px solid rgba(255,255,255,.06);
-  }
-
-  /* =========================================================
-     Reactions
-     ========================================================= */
-  .reactions{
-    display:flex;gap:4px;flex-shrink:0;
-    padding:6px 10px;overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
-    background:rgba(10,10,18,.55);
-    border-bottom:1px solid rgba(255,255,255,.05);
-  }
-  .reactions::-webkit-scrollbar{display:none}
-  .reaction-btn{
-    flex:0 0 auto;width:40px;height:40px;
-    display:grid;place-items:center;padding:0;
-    border-radius:50%;
-    border:1px solid rgba(255,255,255,.10);
-    background:rgba(255,255,255,.06);
-    color:#fff;font-size:20px;line-height:1;
-    cursor:pointer;user-select:none;
-    touch-action:manipulation;
-    transition:transform .12s ease, background .15s ease;
-  }
-  .reaction-btn:active{
-    transform:scale(.88);
-    background:rgba(255,255,255,.16);
-  }
-
-  .reaction-layer{
-    position:absolute;inset:0;
-    overflow:hidden;pointer-events:none;z-index:6;
-  }
-  .reaction-float{
-    position:absolute;bottom:8%;left:50%;
-    font-size:40px;line-height:1;
-    transform:translateX(-50%);
-    will-change:transform, opacity;
-    filter:drop-shadow(0 4px 10px rgba(0,0,0,.55));
-    user-select:none;
-    animation:reactionFloat 3s cubic-bezier(.22,1,.36,1) forwards;
-  }
-  @keyframes reactionFloat{
-    0%{transform:translate(-50%,12px) scale(.5);opacity:0}
-    12%{transform:translate(-50%,0) scale(1.15);opacity:1}
-    24%{transform:translate(-50%,-10px) scale(1);opacity:1}
-    100%{transform:translate(-50%,-260px) scale(.9) rotate(var(--drift,0deg));opacity:0}
-  }
-
-  /* =========================================================
-     Fullscreen
-     ========================================================= */
-  .fs-exit{
-    display:none;position:fixed;
-    top:calc(10px + env(safe-area-inset-top,0px));
-    right:calc(10px + env(safe-area-inset-right,0px));
-    z-index:9999;width:44px;height:44px;
-    align-items:center;justify-content:center;padding:0;
-    border-radius:12px;
-    border:1px solid rgba(255,255,255,.20);
-    background:rgba(0,0,0,.72);color:#fff;
-    font-size:18px;font-weight:700;line-height:1;cursor:pointer;
-    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    box-shadow:0 6px 18px rgba(0,0,0,.45);
-    user-select:none;touch-action:manipulation;
-    transition:transform .12s ease, background .15s ease;
-  }
-  .fs-exit:active{transform:scale(.92);background:rgba(0,0,0,.88)}
-  body.is-fullscreen .fs-exit{display:flex}
-
+.room-app:fullscreen{
+  display:grid;
+  grid-template-columns:1fr min(360px,34vw);
+  grid-template-rows:1fr auto;
+  grid-template-areas:"stage chat" "controls composer";
+  width:100%;height:100%;max-width:none;max-height:none;
+  background:#000;gap:0;padding:0;
+}
+.room-app:fullscreen .topbar,
+.room-app:fullscreen .source-bar,
+.room-app:fullscreen .room-foot{display:none!important}
+.room-app:fullscreen .stage{
+  grid-area:stage;aspect-ratio:auto;
+  max-height:none;height:100%;width:100%;
+}
+.room-app:fullscreen .controls{
+  grid-area:controls;
+  background:rgba(6,6,12,.92);
+  border-top:1px solid rgba(255,255,255,.08);
+  border-bottom:0;
+}
+.room-app:fullscreen .chat{
+  grid-area:chat;
+  border-left:1px solid rgba(255,255,255,.08);
+  background:rgba(8,8,16,.96);
+}
+.room-app:fullscreen .composer{
+  grid-area:composer;
+  border-left:1px solid rgba(255,255,255,.08);
+  border-top:1px solid rgba(255,255,255,.06);
+}
+@media (orientation:portrait){
   .room-app:fullscreen{
-    display:grid;
-    grid-template-columns:1fr min(360px,34vw);
-    grid-template-rows:1fr auto;
-    grid-template-areas:
-      "stage    chat"
-      "controls composer";
-    width:100%;height:100%;
-    max-width:none;max-height:none;
-    background:#000;gap:0;padding:0;
+    grid-template-columns:1fr;grid-template-rows:1fr auto;
+    grid-template-areas:"stage" "controls";
   }
-  .room-app:fullscreen .topbar,
-  .room-app:fullscreen .source-bar,
-  .room-app:fullscreen .room-foot{display:none!important}
+  .room-app:fullscreen .chat,
+  .room-app:fullscreen .composer{display:none}
+}
+@media (min-width:1024px){
+  .room-app:fullscreen{grid-template-columns:1fr min(420px,30vw)}
+}
 
-  .room-app:fullscreen .stage{
-    grid-area:stage;aspect-ratio:auto;
-    max-height:none;height:100%;width:100%;
+/* Larger screens */
+@media (min-width:700px){
+  .landing-wrap{max-width:480px}
+  .brand-name{font-size:30px}
+  .room-app{
+    max-width:720px;margin:0 auto;
+    border-left:1px solid rgba(255,255,255,.06);
+    border-right:1px solid rgba(255,255,255,.06);
   }
-  .room-app:fullscreen .controls{
-    grid-area:controls;
-    background:rgba(6,6,12,.92);
-    border-top:1px solid rgba(255,255,255,.08);
-    border-bottom:0;
-  }
-  .room-app:fullscreen .chat{
-    grid-area:chat;
-    border-left:1px solid rgba(255,255,255,.08);
-    background:rgba(8,8,16,.96);
-  }
-  .room-app:fullscreen .composer{
-    grid-area:composer;
-    border-left:1px solid rgba(255,255,255,.08);
-    border-top:1px solid rgba(255,255,255,.06);
-  }
+  .stage{max-height:52dvh}
+  .chat-list{padding:14px 18px}
+  .code-value{font-size:22px}
+}
+@media (min-width:1024px){
+  .room-app{max-width:820px}
+  .stage{max-height:55dvh}
+}
 
-  @media (orientation:portrait){
-    .room-app:fullscreen{
-      grid-template-columns:1fr;
-      grid-template-rows:1fr auto;
-      grid-template-areas:"stage" "controls";
-    }
-    .room-app:fullscreen .chat,
-    .room-app:fullscreen .composer{display:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
   }
-
-  @media (min-width:1024px){
-    .room-app:fullscreen{grid-template-columns:1fr min(420px,30vw)}
-  }
-
-  /* =========================================================
-     Larger screens
-     ========================================================= */
-  @media (min-width:700px){
-    .landing-wrap{max-width:480px}
-    .brand-name{font-size:30px}
-
-    .room-app{
-      max-width:720px;margin:0 auto;
-      border-left:1px solid rgba(255,255,255,.06);
-      border-right:1px solid rgba(255,255,255,.06);
-    }
-    .stage{max-height:52dvh}
-    .chat-list{padding:14px 18px}
-    .code-value{font-size:22px}
-  }
-
-  @media (min-width:1024px){
-    .room-app{max-width:820px}
-    .stage{max-height:55dvh}
-  }
-
-  /* Focus + motion */
-  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  @media (prefers-reduced-motion:reduce){
-    *,*::before,*::after{
-      animation-duration:.01ms!important;
-      animation-iteration-count:1!important;
-      transition-duration:.01ms!important;
-      scroll-behavior:auto!important;
-    }
-  }
+}
 </style>
 </head>
 <body class="landing">
 
 <div class="bg-glow" aria-hidden="true"></div>
 
-<!-- ===================================================== LANDING -->
+<!-- ==================== LANDING ==================== -->
 <main class="landing-wrap" id="landing">
-
   <header class="brand">
     <div class="brand-mark" aria-hidden="true">
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
@@ -612,7 +561,7 @@
       </svg>
     </div>
     <h1 class="brand-name">Watch Together</h1>
-    <p class="brand-tag">A tiny private room for two or three.</p>
+    <p class="brand-tag">A tiny private YouTube room for two or three.</p>
   </header>
 
   <section class="card glass">
@@ -646,13 +595,12 @@
     No accounts, no uploads, no library. The room code is the only key —
     keep it between the people you trust.
   </p>
-
 </main>
 
-<!-- ===================================================== ROOM -->
+<!-- ==================== ROOM ==================== -->
 <div class="room-app" id="roomApp" hidden>
 
-  <!-- Boot screen -->
+  <!-- Boot -->
   <div class="boot" id="bootScreen">
     <div class="spinner" aria-hidden="true"></div>
     <p class="boot-text" id="bootText" role="status" aria-live="polite">Connecting…</p>
@@ -685,14 +633,14 @@
         <p class="stage-empty-sub" id="stageEmptySub">Paste a YouTube link below.</p>
       </div>
 
-      <div class="yt-wrap" id="ytWrap" hidden><div id="ytPlayer"></div></div>
+      <div id="ytWrap" hidden><div id="ytPlayer"></div></div>
 
       <button class="tap-play" id="tapPlay" type="button" hidden>▶ Tap to play</button>
 
       <div class="reaction-layer" id="reactionLayer" aria-hidden="true"></div>
     </section>
 
-    <form class="source-bar" id="sourceBar" autocomplete="off" novalidate>
+    <form class="source-bar" id="sourceBar" autocomplete="off" novalidate hidden>
       <input id="sourceInput" class="input" type="text"
              placeholder="YouTube link or video ID"
              aria-label="YouTube link or video ID"
@@ -742,35 +690,101 @@
 
   </div>
 
-  <!-- Fullscreen exit button -->
   <button class="fs-exit" id="fsExit" type="button" aria-label="Exit fullscreen">✕</button>
-
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<!-- PeerJS -->
+<!--
+  ============================================================
+  REQUIRED SUPABASE SCHEMA
+  ============================================================
+  Run this once in your Supabase project's SQL editor.
+
+  create table if not exists rooms (
+    id uuid primary key default gen_random_uuid(),
+    code text unique not null,
+    host_id text not null,
+    state jsonb default '{}'::jsonb,
+    created_at timestamptz default now(),
+    updated_at timestamptz default now(),
+    expires_at timestamptz default (now() + interval '12 hours'),
+    closed_at timestamptz
+  );
+  create index if not exists rooms_code_idx on rooms(code);
+
+  create table if not exists participants (
+    id uuid primary key default gen_random_uuid(),
+    room_id uuid references rooms(id) on delete cascade,
+    client_id text not null,
+    name text not null,
+    is_host boolean default false,
+    joined_at timestamptz default now(),
+    last_seen timestamptz default now(),
+    unique(room_id, client_id)
+  );
+  create index if not exists participants_room_idx on participants(room_id);
+
+  create table if not exists messages (
+    id uuid primary key default gen_random_uuid(),
+    room_id uuid references rooms(id) on delete cascade,
+    client_id text not null,
+    name text not null,
+    body text not null,
+    created_at timestamptz default now()
+  );
+  create index if not exists messages_room_idx on messages(room_id, created_at desc);
+
+  alter table rooms enable row level security;
+  alter table participants enable row level security;
+  alter table messages enable row level security;
+
+  create policy "rooms_all"        on rooms        for all using (true) with check (true);
+  create policy "participants_all" on participants for all using (true) with check (true);
+  create policy "messages_all"     on messages     for all using (true) with check (true);
+
+  alter publication supabase_realtime add table messages;
+  ============================================================
+-->
+
+<!-- PeerJS for low-latency playback sync -->
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
-<script>
+<script type="module">
 /* =========================================================
-   Watch Together — YouTube only, single file.
-   Uses PeerJS for peer-to-peer sync. No database required.
+   Watch Together — YouTube hybrid
+   ---------------------------------------------------------
+   • Supabase  → rooms, participants, chat history,
+                 presence, reactions broadcast
+   • PeerJS    → low-latency YouTube playback sync
    ========================================================= */
-'use strict';
 
-/* -------------------------------------------------- constants */
-const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // no confusing chars
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
+
+/* -------------------------------------------------- CONFIG */
+const SUPABASE_URL  = 'https://fbqdpoqkbzbzvbrywaek.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_n-I8VgfUDnH3J35KZrLYsw_j1XTn0E5';
+
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: { persistSession:false, autoRefreshToken:false },
+  realtime: { params: { eventsPerSecond: 10 } },
+});
+
+/* -------------------------------------------------- Constants */
+const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const CODE_LEN = 6;
 const PEER_PREFIX = 'wtw-yt-v1-';
 const MAX_PARTICIPANTS = 3;
 const HEARTBEAT_MS = 5000;
-const DRIFT_TOLERANCE = 2;   // seconds before a guest seeks
+const DRIFT_TOLERANCE = 2;
 const YT_API_SRC = 'https://www.youtube.com/iframe_api';
+const CHAT_HISTORY = 60;
 
-/* -------------------------------------------------- identity */
 const K_NAME = 'wtw.name';
 const K_ID = 'wtw.clientId';
+
+/* -------------------------------------------------- Helpers */
+const $ = sel => document.querySelector(sel);
 
 function uuid(){
   if(crypto.randomUUID) return crypto.randomUUID();
@@ -781,7 +795,6 @@ function uuid(){
   const h = [...b].map(x => x.toString(16).padStart(2,'0'));
   return `${h.slice(0,4).join('')}-${h.slice(4,6).join('')}-${h.slice(6,8).join('')}-${h.slice(8,10).join('')}-${h.slice(10,16).join('')}`;
 }
-
 function getClientId(){
   let id = null;
   try{ id = localStorage.getItem(K_ID); }catch{}
@@ -802,9 +815,6 @@ function normalizeCode(raw){
   return String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,CODE_LEN);
 }
 
-/* -------------------------------------------------- tiny helpers */
-const $ = sel => document.querySelector(sel);
-
 function fmtTime(sec){
   const total = Math.max(0, Math.floor(Number(sec) || 0));
   const h = Math.floor(total/3600);
@@ -822,6 +832,33 @@ function toast(msg, ms = 2600){
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+}
+
+function withTimeout(promise, ms, label){
+  let timer;
+  return Promise.race([
+    Promise.resolve(promise).finally(() => clearTimeout(timer)),
+    new Promise((_, rej) => {
+      timer = setTimeout(() => rej(new Error(`${label} timed out.`)), ms);
+    }),
+  ]);
+}
+function withSoftTimeout(promise, ms, fallback){
+  let timer;
+  return Promise.race([
+    Promise.resolve(promise).finally(() => clearTimeout(timer)),
+    new Promise(res => { timer = setTimeout(() => res(fallback), ms); }),
+  ]);
+}
+
+function friendly(err, fallback='Something went wrong. Please try again.'){
+  const msg = String(err?.message || err || '');
+  if(/Failed to fetch|NetworkError|Load failed/i.test(msg))
+    return "Can't reach the server. Check your internet connection.";
+  if(/duplicate key/i.test(msg)) return 'That code is already taken.';
+  if(/row-level security|permission denied/i.test(msg)) return 'That action is not allowed.';
+  if(/JWT|apikey/i.test(msg)) return 'The app is not configured correctly.';
+  return fallback;
 }
 
 /* -------------------------------------------------- YouTube API */
@@ -846,16 +883,13 @@ function loadYouTubeApi(){
   return ytApiPromise;
 }
 
-/* -------------------------------------------------- URL parsing */
 function parseYouTubeId(input){
   const raw = String(input || '').trim();
   if(!raw) return null;
   if(/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
   let url;
-  try{
-    url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
-  } catch { return null; }
-
+  try{ url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`); }
+  catch { return null; }
   const host = url.hostname.replace(/^www\.|^m\./i,'');
   if(host === 'youtu.be'){
     const id = url.pathname.slice(1).split('/')[0];
@@ -871,14 +905,149 @@ function parseYouTubeId(input){
 }
 
 /* =========================================================
+   SUPABASE OPERATIONS
+   ========================================================= */
+async function createRoom(name){
+  const clientId = getClientId();
+  let lastErr = null;
+
+  for(let attempt=0; attempt<6; attempt++){
+    const code = makeCode();
+    const { data, error } = await sb
+      .from('rooms')
+      .insert({ code, host_id: clientId })
+      .select('*')
+      .single();
+
+    if(!error && data){
+      const { error: pErr } = await sb.from('participants').insert({
+        room_id: data.id,
+        client_id: clientId,
+        name,
+        is_host: true,
+      });
+      if(pErr && pErr.code !== '23505') throw new Error(friendly(pErr));
+      return data;
+    }
+    lastErr = error;
+    if(error && error.code !== '23505') break;
+  }
+  throw new Error(friendly(lastErr, 'Could not create a room. Please try again.'));
+}
+
+async function findRoom(code){
+  const { data, error } = await sb
+    .from('rooms')
+    .select('*')
+    .eq('code', code)
+    .maybeSingle();
+  if(error) throw new Error(friendly(error, 'Could not check that room code.'));
+  return data || null;
+}
+
+function roomIsClosed(room){
+  if(!room) return true;
+  if(room.closed_at) return true;
+  if(new Date(room.expires_at).getTime() < Date.now()) return true;
+  return false;
+}
+
+async function joinRoom(room, name){
+  const clientId = getClientId();
+  const { data, error } = await sb
+    .from('participants')
+    .upsert({
+      room_id: room.id,
+      client_id: clientId,
+      name,
+      is_host: room.host_id === clientId,
+      joined_at: new Date().toISOString(),
+      last_seen: new Date().toISOString(),
+    }, { onConflict: 'room_id,client_id' })
+    .select('*')
+    .single();
+  if(error) throw new Error(friendly(error, 'Could not join that room.'));
+  return data;
+}
+
+async function leaveRoomDb(roomId, clientId){
+  await sb.from('participants')
+    .delete()
+    .eq('room_id', roomId)
+    .eq('client_id', clientId);
+}
+
+async function closeRoomDb(roomId){
+  await sb.from('rooms').update({
+    closed_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }).eq('id', roomId);
+}
+
+async function reopenRoomDb(roomId){
+  const { error } = await sb.from('rooms').update({
+    closed_at: null,
+    updated_at: new Date().toISOString(),
+  }).eq('id', roomId);
+  if(error) throw new Error(friendly(error, 'Could not reopen the room.'));
+}
+
+async function persistState(roomId, state){
+  await sb.from('rooms').update({
+    state,
+    updated_at: new Date().toISOString(),
+  }).eq('id', roomId);
+}
+
+async function touchParticipant(roomId, clientId){
+  await sb.from('participants')
+    .update({ last_seen: new Date().toISOString() })
+    .eq('room_id', roomId)
+    .eq('client_id', clientId);
+}
+
+async function countParticipants(roomId){
+  const cutoff = new Date(Date.now() - 60000).toISOString();
+  const { count } = await sb
+    .from('participants')
+    .select('id', { count:'exact', head:true })
+    .eq('room_id', roomId)
+    .gte('last_seen', cutoff);
+  return count || 0;
+}
+
+async function loadRecentMessages(roomId, limit = CHAT_HISTORY){
+  const { data, error } = await sb
+    .from('messages')
+    .select('id, client_id, name, body, created_at')
+    .eq('room_id', roomId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if(error) return [];
+  return data.reverse();
+}
+
+async function sendMessageDb(roomId, clientId, name, body){
+  const clean = String(body || '').trim().slice(0, 600);
+  if(!clean) return;
+  const { error } = await sb.from('messages').insert({
+    room_id: roomId,
+    client_id: clientId,
+    name,
+    body: clean,
+  });
+  if(error) throw new Error(friendly(error, 'Message could not be sent.'));
+}
+
+/* =========================================================
    LANDING PAGE
    ========================================================= */
-const landing      = $('#landing');
-const nameInput    = $('#nameInput');
-const codeInput    = $('#codeInput');
-const createBtn    = $('#createBtn');
-const joinForm     = $('#joinForm');
-const landingStatus= $('#landingStatus');
+const landing       = $('#landing');
+const nameInput     = $('#nameInput');
+const codeInput     = $('#codeInput');
+const createBtn     = $('#createBtn');
+const joinForm      = $('#joinForm');
+const landingStatus = $('#landingStatus');
 
 nameInput.value = getName();
 nameInput.addEventListener('blur', () => {
@@ -895,26 +1064,29 @@ function currentName(){
   if(n) setName(n);
   return n;
 }
-
 function setLandingStatus(msg, ok=false){
   landingStatus.textContent = msg || '';
   landingStatus.classList.toggle('ok', !!ok);
 }
 
-if(!getName()){ setTimeout(() => nameInput.focus(), 250); }
+if(!getName()) setTimeout(() => nameInput.focus(), 250);
 
-createBtn.addEventListener('click', () => {
+createBtn.addEventListener('click', async () => {
   const name = currentName();
   if(!name){ setLandingStatus('Please enter a name first.'); nameInput.focus(); return; }
-  const code = makeCode();
-  const url = new URL(location.href);
-  url.search = '';
-  url.searchParams.set('c', code);
-  url.searchParams.set('host', '1');
-  location.href = url.toString();
+  createBtn.disabled = true;
+  setLandingStatus('Creating your room…', true);
+  try{
+    const room = await createRoom(name);
+    try{ sessionStorage.setItem('wtw.pendingRoom', room.code); }catch{}
+    location.href = `?room=${encodeURIComponent(room.code)}&host=1`;
+  }catch(err){
+    setLandingStatus(err.message || 'Could not create a room.');
+    createBtn.disabled = false;
+  }
 });
 
-joinForm.addEventListener('submit', (e) => {
+joinForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = currentName();
   if(!name){ setLandingStatus('Please enter a name first.'); nameInput.focus(); return; }
@@ -924,85 +1096,101 @@ joinForm.addEventListener('submit', (e) => {
     codeInput.focus();
     return;
   }
-  const url = new URL(location.href);
-  url.search = '';
-  url.searchParams.set('c', code);
-  location.href = url.toString();
+  const btn = joinForm.querySelector('button[type=submit]');
+  btn.disabled = true;
+  setLandingStatus('Looking for that room…', true);
+  try{
+    const room = await findRoom(code);
+    if(!room){ setLandingStatus('Room not found.'); btn.disabled = false; codeInput.select(); return; }
+    if(roomIsClosed(room)){ setLandingStatus('That room has already ended.'); btn.disabled = false; return; }
+    try{ sessionStorage.setItem('wtw.pendingRoom', room.code); }catch{}
+    location.href = `?room=${encodeURIComponent(room.code)}`;
+  }catch(err){
+    setLandingStatus(err.message || 'Could not join that room.');
+    btn.disabled = false;
+  }
 });
 
 /* =========================================================
    ROOM
    ========================================================= */
+const params = new URLSearchParams(location.search);
+const roomCodeParam = normalizeCode(params.get('room') || params.get('c'));
+const explicitHost  = params.get('host') === '1';
+
+if(roomCodeParam){
+  bootInit();
+}
+
+/* -------------------------------------------------- Refs */
 const roomApp     = $('#roomApp');
 const roomContent = $('#roomContent');
 const bootScreen  = $('#bootScreen');
 const bootText    = $('#bootText');
 const bootRetry   = $('#bootRetry');
 const bootBack    = $('#bootBack');
-
 const codeValue   = $('#codeValue');
 const codeChip    = $('#codeChip');
 const shareBtn    = $('#shareBtn');
 const backLink    = $('#backLink');
 const onlineCount = $('#onlineCount');
 
-const stage       = $('#stage');
-const stageEmpty  = $('#stageEmpty');
+const stage         = $('#stage');
+const stageEmpty    = $('#stageEmpty');
 const stageEmptySub = $('#stageEmptySub');
-const ytWrap      = $('#ytWrap');
-const ytHost      = $('#ytPlayer');
-const tapPlay     = $('#tapPlay');
+const ytWrap        = $('#ytWrap');
+const ytHost        = $('#ytPlayer');
+const tapPlay       = $('#tapPlay');
 const reactionLayer = $('#reactionLayer');
 
 const sourceBar   = $('#sourceBar');
 const sourceInput = $('#sourceInput');
 
-const playBtn     = $('#playBtn');
-const seek        = $('#seek');
-const timeNow     = $('#timeNow');
-const timeEnd     = $('#timeEnd');
-const muteBtn     = $('#muteBtn');
-const fsBtn       = $('#fsBtn');
+const playBtn  = $('#playBtn');
+const seek     = $('#seek');
+const timeNow  = $('#timeNow');
+const timeEnd  = $('#timeEnd');
+const muteBtn  = $('#muteBtn');
+const fsBtn    = $('#fsBtn');
 
-const chatList    = $('#chatList');
-const chatHint    = $('#chatHint');
-const composer    = $('#composer');
-const chatInput   = $('#chatInput');
+const chatList  = $('#chatList');
+const chatHint  = $('#chatHint');
+const composer  = $('#composer');
+const chatInput = $('#chatInput');
 
 const leaveBtn    = $('#leaveBtn');
 const fsExit      = $('#fsExit');
 const reactionBar = $('#reactionBar');
 
-/* -------------------------------------------------- room state */
+/* -------------------------------------------------- Room state */
 const clientId = getClientId();
-let myName = '';
+let myName = getName().trim().slice(0,18);
+
+let room = null;
 let isHost = false;
-let roomCode = null;
-
-let peer = null;
-let connections = [];          // array of DataConnection (host only)
-let hostConn = null;           // single connection (guest only)
-let peerNames = {};            // peerId -> name
-let amILeaving = false;
-
+let channel = null;
 let player = null;
 let ytReady = false;
 let currentVideoId = null;
 let currentState = { kind:'none', src:null, playing:false, position:0, at:0 };
 let applyingRemote = false;
-let heartbeatTimer = 0;
-let lastStateSent = 0;
 let draggingSeek = false;
 let userHasInteracted = false;
+let leaving = false;
 
-/* -------------------------------------------------- URL parsing */
-const params = new URLSearchParams(location.search);
-roomCode = normalizeCode(params.get('c'));
-const explicitHost = params.get('host') === '1';
+let peer = null;
+let peerConnections = [];   // host: all guest connections
+let hostConn = null;        // guest: single connection to host
+let peerReady = false;
+let peerNames = {};         // peerId -> name
 
-if(!myName && getName()) myName = getName().trim().slice(0,18);
+let heartbeatTimer = 0;
+let persistTimer = 0;
+let lastPersist = 0;
+let hostGraceTimer = 0;
+let participantTimer = 0;
 
-/* -------------------------------------------------- boot helpers */
+/* -------------------------------------------------- Boot helpers */
 function boot(text){
   bootScreen.classList.remove('is-error');
   bootText.textContent = text;
@@ -1013,7 +1201,7 @@ function boot(text){
   bootBack.textContent = 'Back to start';
   bootBack.onclick = () => { location.href = location.pathname; };
 }
-function bootFail(msg, { retry = false } = {}){
+function bootFail(msg, { retry=false } = {}){
   bootScreen.classList.add('is-error');
   bootScreen.hidden = false;
   roomContent.hidden = true;
@@ -1035,276 +1223,98 @@ function bootDone(){
   roomContent.hidden = false;
 }
 
-/* -------------------------------------------------- init */
-boot('Connecting…');
+/* -------------------------------------------------- Main init */
+async function bootInit(){
+  boot('Connecting…');
 
-if(!myName){
-  bootFail('Please enter your name on the home page first.');
-} else if(!roomCode || roomCode.length !== CODE_LEN){
-  bootFail('That room code is not valid.');
-} else if(typeof Peer === 'undefined'){
-  bootFail('The connection library failed to load. Check your internet connection.', { retry: true });
-} else {
-  codeValue.textContent = roomCode;
-  // Decide role: explicit host flag OR first to grab the ID becomes host
-  initPeer();
-}
-
-/* -------------------------------------------------- PeerJS */
-function initPeer(){
-  const wantedId = PEER_PREFIX + roomCode.toLowerCase();
-
-  if(explicitHost){
-    isHost = true;
-    boot('Creating your room…');
-    tryStartPeer(wantedId, true);
-  } else {
-    // Try to become host first. If the ID is taken, we are a guest.
-    isHost = false;
-    boot('Looking for the room…');
-    tryStartPeer(null, false);
+  if(!myName){
+    // fallback to sessionStorage
+    try{
+      const n = sessionStorage.getItem('wtw.name');
+      if(n) myName = n.trim().slice(0,18);
+    }catch{}
   }
-}
-
-function tryStartPeer(customId, wantToBeHost){
-  const opts = { debug: 1 };
-  try {
-    peer = customId ? new Peer(customId, opts) : new Peer(undefined, opts);
-  } catch(err){
-    bootFail('Could not start the connection.', { retry: true });
+  if(!myName){
+    bootFail('Please enter your name on the home page first.');
     return;
   }
 
-  let opened = false;
-  let errorHandled = false;
+  const code = roomCodeParam;
+  if(code.length !== CODE_LEN){
+    bootFail('That room code is not valid.');
+    return;
+  }
 
-  const openTimer = setTimeout(() => {
-    if(!opened && !errorHandled){
-      errorHandled = true;
-      bootFail('The connection timed out. Check your network and retry.', { retry: true });
+  codeValue.textContent = code;
+
+  let found;
+  try{
+    found = await withTimeout(findRoom(code), 12000, 'findRoom');
+  }catch(err){
+    bootFail('Could not check the room. Please retry.', { retry:true });
+    return;
+  }
+
+  if(!found){ bootFail('Room not found.'); return; }
+
+  room = found;
+  isHost = room.host_id === clientId;
+
+  // Closed / expired handling
+  if(roomIsClosed(room)){
+    const expired = !room.expires_at || new Date(room.expires_at).getTime() <= Date.now();
+    if(isHost && !expired){
+      // Offer reopen
+      bootScreen.classList.add('is-error');
+      bootText.textContent = 'This room was closed. Reopen it?';
+      bootRetry.hidden = false;
+      bootRetry.disabled = false;
+      bootRetry.textContent = 'Reopen Room';
+      bootRetry.onclick = async () => {
+        bootRetry.disabled = true;
+        bootRetry.textContent = 'Reopening…';
+        try{
+          await reopenRoomDb(room.id);
+          location.reload();
+        }catch(err){
+          bootRetry.disabled = false;
+          bootRetry.textContent = 'Try again';
+          bootText.textContent = err.message || 'Could not reopen the room.';
+        }
+      };
+      bootBack.hidden = false;
+      bootBack.onclick = () => { location.href = location.pathname; };
+      return;
     }
-  }, 15000);
+    bootFail('That room has already ended.');
+    return;
+  }
 
-  peer.on('open', (id) => {
-    opened = true;
-    clearTimeout(openTimer);
-    console.log('[PEER] open as', id, '| isHost:', isHost);
-    if(isHost){
-      // We are host. Wait for guests.
-      enterRoom();
-      bootDone();
-    } else {
-      // Connect to the host using the room code.
-      connectToHost();
-    }
-  });
-
-  peer.on('error', (err) => {
-    console.warn('[PEER] error', err.type, err.message);
-
-    if(err.type === 'unavailable-id'){
-      // Host ID already taken — either someone else is host, or we
-      // tried to create a room with a code that already exists.
-      if(wantToBeHost){
-        errorHandled = true;
-        clearTimeout(openTimer);
-        bootFail('That room code is already in use. Please try again.', { retry: false });
-        try{ peer.destroy(); }catch{}
+  // Participant count check for guests
+  if(!isHost){
+    try{
+      const count = await withSoftTimeout(countParticipants(room.id), 4000, 0);
+      if(count >= MAX_PARTICIPANTS){
+        bootFail('This room is full.');
         return;
       }
-      // Guest fallback: ignore, we are already a guest.
-      return;
-    }
-    if(err.type === 'peer-unavailable'){
-      errorHandled = true;
-      clearTimeout(openTimer);
-      bootFail('Room not found. Check the code, or ask the host to create it again.', { retry: true });
-      return;
-    }
-    if(err.type === 'network' || err.type === 'server-error'){
-      errorHandled = true;
-      clearTimeout(openTimer);
-      bootFail('Connection problem. Please retry.', { retry: true });
-      return;
-    }
-  });
-
-  peer.on('connection', (conn) => {
-    if(!isHost){ // only the host accepts incoming connections
-      try{ conn.close(); }catch{}
-      return;
-    }
-    setupConnection(conn);
-  });
-}
-
-function connectToHost(){
-  const hostId = PEER_PREFIX + roomCode.toLowerCase();
-  const conn = peer.connect(hostId, {
-    reliable: true,
-    metadata: { name: myName }
-  });
-
-  const connectTimer = setTimeout(() => {
-    if(hostConn === null){
-      bootFail('Could not reach the host. Check the code and retry.', { retry: true });
-    }
-  }, 12000);
-
-  conn.on('open', () => {
-    clearTimeout(connectTimer);
-    hostConn = conn;
-    setupConnection(conn, true);
-    sendToHost({ type: 'hello', name: myName, clientId });
-    enterRoom();
-    bootDone();
-  });
-
-  conn.on('error', (err) => {
-    clearTimeout(connectTimer);
-    console.warn('[PEER] guest conn error', err);
-    bootFail('Connection failed. Retry or check the room code.', { retry: true });
-  });
-}
-
-function setupConnection(conn, isHostSide = false){
-  if(!connections.includes(conn)) connections.push(conn);
-
-  conn.on('data', (data) => handleMessage(data, conn));
-
-  conn.on('close', () => {
-    connections = connections.filter(c => c !== conn);
-    const nm = peerNames[conn.peer] || 'Guest';
-    delete peerNames[conn.peer];
-    updateOnlineCount();
-    appendSystem(`${nm} left the room.`);
-    if(isHost){
-      // Relay updated presence
-      broadcast({ type:'presence', names: namesList() });
-    }
-  });
-
-  conn.on('error', (err) => console.warn('[PEER] conn error', err));
-
-  if(!isHostSide) updateOnlineCount();
-}
-
-/* -------------------------------------------------- messaging */
-function sendToHost(msg){
-  if(hostConn && hostConn.open){
-    try{ hostConn.send(msg); }catch(e){ console.warn(e); }
+    }catch{}
   }
-}
-function broadcast(msg, except = null){
-  for(const conn of connections){
-    if(conn !== except && conn.open){
-      try{ conn.send(msg); }catch(e){ console.warn(e); }
-    }
+
+  // Join participants table
+  try{
+    await withTimeout(joinRoom(room, myName), 10000, 'joinRoom');
+  }catch(err){
+    bootFail('Could not join the room. Please retry.', { retry:true });
+    return;
   }
-}
-function namesList(){
-  const list = [{ id: clientId, name: myName, isHost }];
-  for(const conn of connections){
-    list.push({ id: conn.peer, name: peerNames[conn.peer] || 'Guest', isHost: false });
-  }
-  return list;
-}
 
-function handleMessage(data, fromConn){
-  if(!data || typeof data !== 'object') return;
-
-  switch(data.type){
-    case 'hello': {
-      peerNames[fromConn.peer] = (data.name || 'Guest').slice(0,18);
-      if(isHost){
-        // Relay to other guests
-        broadcast({ type:'peer-join', name: peerNames[fromConn.peer] }, fromConn);
-        // Send current state to the new guest
-        if(currentState.kind === 'youtube' && currentVideoId){
-          const live = buildLiveState();
-          sendTo(fromConn, { type:'state', state: live });
-        }
-        // Send full presence to everyone
-        broadcast({ type:'presence', names: namesList() });
-        // Send chat history (last 40 messages kept in memory)
-        if(chatHistory.length){
-          sendTo(fromConn, { type:'history', messages: chatHistory.slice(-40) });
-        }
-      }
-      appendSystem(`${peerNames[fromConn.peer]} joined the room.`);
-      updateOnlineCount();
-      break;
-    }
-
-    case 'state':
-      applyRemoteState(data.state);
-      break;
-
-    case 'chat': {
-      const msg = {
-        type:'chat',
-        clientId: data.clientId || fromConn.peer,
-        name: (data.name || 'Guest').slice(0,18),
-        body: String(data.body || '').slice(0,600),
-        ts: data.ts || Date.now()
-      };
-      appendChat(msg);
-      rememberChat(msg);
-      // Host relays to other guests
-      if(isHost) broadcast(msg, fromConn);
-      break;
-    }
-
-    case 'reaction': {
-      const payload = { emoji: data.emoji, name: data.name || 'Guest' };
-      showReaction(payload);
-      if(isHost) broadcast(payload, fromConn);
-      break;
-    }
-
-    case 'presence':
-      if(!isHost && Array.isArray(data.names)){
-        // Update our view of who's here
-        for(const p of data.names){
-          if(p.id !== clientId) peerNames[p.id] = p.name;
-        }
-        updateOnlineCount();
-      }
-      break;
-
-    case 'peer-join': {
-      appendSystem(`${data.name} joined the room.`);
-      break;
-    }
-
-    case 'peer-left': {
-      appendSystem(`${data.name} left the room.`);
-      break;
-    }
-
-    case 'history': {
-      if(Array.isArray(data.messages)){
-        chatList.replaceChildren();
-        for(const m of data.messages) appendChat(m);
-      }
-      break;
-    }
-  }
-}
-
-function sendTo(conn, msg){
-  if(conn && conn.open){
-    try{ conn.send(msg); }catch(e){ console.warn(e); }
-  }
-}
-
-/* -------------------------------------------------- enter room */
-function enterRoom(){
+  // Set up UI now
   document.body.classList.remove('landing');
   document.body.classList.add('room');
   landing.hidden = true;
   roomApp.hidden = false;
-  document.title = `Room ${roomCode} — Watch Together`;
+  document.title = `Room ${code} — Watch Together`;
 
   setupPlayer();
   setupControls();
@@ -1318,40 +1328,315 @@ function enterRoom(){
   seek.disabled = !isHost;
   muteBtn.disabled = !isHost;
   sourceBar.hidden = !isHost;
-  sourceInput.placeholder = 'YouTube link or video ID';
 
-  if(isHost) startHeartbeat();
-  updateOnlineCount();
+  // Load recent chat history
+  try{
+    const rows = await withSoftTimeout(loadRecentMessages(room.id), 4000, []);
+    if(rows && rows.length){
+      chatList.replaceChildren();
+      for(const m of rows) appendChat({ ...m, client_id:m.client_id, name:m.name, body:m.body, ts:new Date(m.created_at).getTime() });
+      chatList.scrollTop = chatList.scrollHeight;
+    }
+  }catch{}
+
+  // Connect Supabase channel
+  boot('Joining the room…');
+  try{
+    await withTimeout(openChannel(), 12000, 'realtime');
+  }catch(err){
+    bootFail('Could not connect to the room. Please retry.', { retry:true });
+    return;
+  }
+
+  // Set up PeerJS
+  setupPeerJs();
+
+  // Boot done
+  bootDone();
   appendSystem(isHost ? 'You created this room.' : 'You joined the room.');
+
+  // Start participant heartbeat
+  startParticipantHeartbeat();
+
+  // Show existing persisted state
+  if(room.state && room.state.kind === 'youtube' && room.state.src){
+    if(!isHost){
+      // Guest: load silently, tap-to-play needed
+      loadVideoForGuest(room.state.src).catch(()=>{});
+      currentState = room.state;
+    } else {
+      // Host: restore last state
+      currentVideoId = room.state.src;
+      loadVideoAsHost(room.state.src, { restore:true }).catch(()=>{});
+    }
+  }
 }
 
-/* -------------------------------------------------- player */
+/* =========================================================
+   SUPABASE REALTIME CHANNEL
+   ========================================================= */
+function openChannel(){
+  return new Promise((resolve, reject) => {
+    const name = `room:${room.code}`;
+    console.log('[RT] opening', name);
+
+    if(channel){
+      try{ sb.removeChannel(channel); }catch{}
+      channel = null;
+    }
+
+    let settled = false;
+    const settle = (kind, val) => {
+      if(settled) return;
+      settled = true;
+      if(kind === 'resolve') resolve(val);
+      else reject(val);
+    };
+
+    try{
+      channel = sb.channel(name, {
+        config: {
+          broadcast: { self:false },
+          presence: { key: clientId },
+        },
+      });
+    }catch(err){
+      settle('reject', new Error('Could not create realtime channel.'));
+      return;
+    }
+
+    // Presence
+    channel.on('presence', { event:'sync' }, () => handlePresence());
+
+    // Chat (postgres_changes on messages)
+    channel.on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages',
+      filter: `room_id=eq.${room.id}`,
+    }, ({ new: row }) => {
+      appendChat({
+        client_id: row.client_id,
+        name: row.name,
+        body: row.body,
+        ts: new Date(row.created_at).getTime(),
+      });
+    });
+
+    // Reactions broadcast
+    channel.on('broadcast', { event:'reaction' }, ({ payload }) => {
+      showReaction(payload);
+    });
+
+    const localTimer = setTimeout(() => {
+      try{ channel?.unsubscribe(); }catch{}
+      settle('reject', new Error('Realtime connection timed out.'));
+    }, 12000);
+
+    channel.subscribe((status, err) => {
+      console.log('[RT] status', status, err || '');
+      if(status === 'SUBSCRIBED'){
+        clearTimeout(localTimer);
+        channel.track({
+          name: myName,
+          is_host: isHost,
+          joined_at: new Date().toISOString(),
+        }).catch(e => console.warn('[RT] track failed', e));
+        settle('resolve');
+      } else if(status === 'CHANNEL_ERROR'){
+        settle('reject', new Error('Realtime connection failed.'));
+      } else if(status === 'TIMED_OUT'){
+        settle('reject', new Error('Realtime connection timed out.'));
+      } else if(status === 'CLOSED'){
+        settle('reject', new Error('Realtime channel closed.'));
+      }
+    });
+  });
+}
+
+function handlePresence(){
+  if(!channel) return;
+  const state = channel.presenceState();
+  const onlineIds = new Set();
+  let hostPresent = false;
+
+  for(const [key, values] of Object.entries(state)){
+    if(!values || !values.length) continue;
+    onlineIds.add(key);
+    for(const v of values){
+      if(v.is_host) hostPresent = true;
+      if(v.name) peerNames[key] = v.name;
+    }
+  }
+
+  onlineCount.textContent = String(onlineIds.size || 1);
+
+  // Guest host-disconnect handling
+  if(!isHost){
+    if(!hostPresent && onlineIds.size > 0){
+      if(!hostGraceTimer){
+        toast('The host disconnected. Waiting for them to return…', 5000);
+        hostGraceTimer = setTimeout(() => {
+          endSession('The host left the room.');
+        }, 90000);
+      }
+    } else if(hostPresent && hostGraceTimer){
+      clearTimeout(hostGraceTimer);
+      hostGraceTimer = 0;
+      toast('The host is back.');
+    }
+  }
+}
+
+/* =========================================================
+   PEERJS — playback sync
+   ========================================================= */
+function setupPeerJs(){
+  const wantedId = PEER_PREFIX + room.code.toLowerCase();
+
+  if(isHost){
+    // Host claims the room ID
+    try{
+      peer = new Peer(wantedId, { debug:1 });
+    }catch(err){
+      console.warn('[PEER] could not create peer', err);
+      toast('Live sync unavailable — chat still works.');
+      return;
+    }
+
+    peer.on('open', (id) => {
+      peerReady = true;
+      console.log('[PEER] host open', id);
+    });
+
+    peer.on('connection', (conn) => {
+      setupConnection(conn);
+    });
+
+    peer.on('error', (err) => {
+      console.warn('[PEER] host error', err.type, err.message);
+      if(err.type === 'unavailable-id'){
+        // Someone else has the same ID (stale tab?). We keep the room,
+        // we just can't sync via PeerJS. Chat still works via Supabase.
+        toast('Live sync is busy. Chat still works.', 4000);
+      }
+    });
+  } else {
+    // Guest: connect to host's ID
+    try{
+      peer = new Peer({ debug:1 });
+    }catch(err){
+      console.warn('[PEER] guest could not create peer', err);
+      return;
+    }
+
+    peer.on('open', () => {
+      const conn = peer.connect(wantedId, { reliable:true, metadata:{ name: myName } });
+      const timer = setTimeout(() => {
+        if(!hostConn){
+          console.warn('[PEER] guest connect timeout');
+          toast('Live sync unavailable — chat still works.', 4000);
+        }
+      }, 8000);
+
+      conn.on('open', () => {
+        clearTimeout(timer);
+        hostConn = conn;
+        peerReady = true;
+        setupConnection(conn);
+        sendToHost({ type:'hello', name: myName });
+        console.log('[PEER] guest connected');
+      });
+
+      conn.on('error', (err) => {
+        console.warn('[PEER] guest conn error', err);
+      });
+    });
+
+    peer.on('error', (err) => {
+      console.warn('[PEER] guest error', err.type, err.message);
+      if(err.type === 'peer-unavailable'){
+        toast('Live sync unavailable — chat still works.', 4000);
+      }
+    });
+  }
+}
+
+function setupConnection(conn){
+  if(!peerConnections.includes(conn)) peerConnections.push(conn);
+  if(!isHost) hostConn = conn;
+
+  conn.on('data', (data) => handlePeerMessage(data, conn));
+
+  conn.on('close', () => {
+    peerConnections = peerConnections.filter(c => c !== conn);
+    if(!isHost && conn === hostConn) hostConn = null;
+    const nm = peerNames[conn.peer] || 'Guest';
+    delete peerNames[conn.peer];
+    appendSystem(`${nm} left the room.`);
+  });
+
+  conn.on('error', (err) => console.warn('[PEER] conn error', err));
+}
+
+function sendToHost(msg){
+  if(hostConn && hostConn.open){
+    try{ hostConn.send(msg); }catch{}
+  }
+}
+function broadcastPeer(msg, except = null){
+  for(const c of peerConnections){
+    if(c !== except && c.open){
+      try{ c.send(msg); }catch{}
+    }
+  }
+}
+
+function handlePeerMessage(data, fromConn){
+  if(!data || typeof data !== 'object') return;
+  switch(data.type){
+    case 'hello':
+      peerNames[fromConn.peer] = (data.name || 'Guest').slice(0,18);
+      if(isHost && currentVideoId){
+        // Send current state to the new guest
+        sendTo(fromConn, { type:'state', state: buildLiveState() });
+      }
+      break;
+    case 'state':
+      if(!isHost) applyRemoteState(data.state);
+      break;
+    case 'request-sync':
+      if(isHost && currentVideoId){
+        sendTo(fromConn, { type:'state', state: buildLiveState() });
+      }
+      break;
+  }
+}
+function sendTo(conn, msg){
+  if(conn && conn.open){
+    try{ conn.send(msg); }catch{}
+  }
+}
+
+/* =========================================================
+   YOUTUBE PLAYER
+   ========================================================= */
 function setupPlayer(){
-  // Placeholder until first video loads. We lazily create YT.Player.
+  // Lazy: created when a video is loaded.
 }
 
-async function loadVideo(videoId, { broadcastThis = true } = {}){
-  if(!isHost) return;
-  if(!videoId) return;
-
-  bootScreen.hidden = true;
+async function loadVideoAsHost(videoId, { restore=false } = {}){
+  if(!isHost || !videoId) return;
   stageEmpty.hidden = true;
   ytWrap.hidden = false;
 
   try{
     const YT = await loadYouTubeApi();
-
     if(player && ytReady && currentVideoId === videoId){
-      // Same video, just update state
-      pushState({ playing:false, position:0 });
+      pushState({}, { force:true });
       return;
     }
-
-    if(player){
-      try{ player.destroy(); }catch{}
-      player = null;
-      ytReady = false;
-    }
+    if(player){ try{ player.destroy(); }catch{} player = null; ytReady = false; }
 
     ytHost.replaceChildren();
     currentVideoId = videoId;
@@ -1362,14 +1647,9 @@ async function loadVideo(videoId, { broadcastThis = true } = {}){
         width: '100%',
         height: '100%',
         playerVars: {
-          controls: 0,
-          disablekb: 1,
-          modestbranding: 1,
-          rel: 0,
-          playsinline: 1,
-          fs: 0,
-          iv_load_policy: 3,
-          origin: location.origin
+          controls: 0, disablekb: 1, modestbranding: 1,
+          rel: 0, playsinline: 1, fs: 0, iv_load_policy: 3,
+          origin: location.origin,
         },
         events: {
           onReady: () => { ytReady = true; resolve(); },
@@ -1379,99 +1659,27 @@ async function loadVideo(videoId, { broadcastThis = true } = {}){
               pushState({}, { force:true });
             }
           },
-          onError: () => {
-            toast('That YouTube video cannot be played here.');
-          }
+          onError: () => toast('That YouTube video cannot be played here.'),
         }
       });
     });
 
-    // Broadcast the new video immediately
-    if(broadcastThis){
-      pushState({ kind:'youtube', src:videoId, playing:false, position:0, at:Date.now() },
-                { force:true, replace:true });
+    if(!restore){
+      pushState({
+        kind: 'youtube',
+        src: videoId,
+        playing: false,
+        position: 0,
+        at: Date.now(),
+      }, { force:true, replace:true });
     }
-  } catch(err){
+  }catch(err){
     toast(err.message || 'Could not load the video.');
   }
 }
 
-/* -------------------------------------------------- state */
-function buildLiveState(){
-  let pos = currentState.position || 0;
-  let playing = !!currentState.playing;
-  if(player && ytReady){
-    try{
-      pos = Number(player.getCurrentTime?.() || 0);
-      playing = player.getPlayerState?.() === 1;
-    }catch{}
-  }
-  return {
-    kind: currentState.kind,
-    src: currentVideoId,
-    playing,
-    position: pos,
-    at: Date.now()
-  };
-}
-
-function pushState(patch = {}, opts = {}){
-  if(!isHost) return;
-
-  const now = Date.now();
-  if(!opts.force && now - lastStateSent < 350) return;
-  lastStateSent = now;
-
-  let next = { ...currentState, ...patch };
-
-  if(patch.kind === undefined) next.kind = currentState.kind;
-  if(patch.src === undefined) next.src = currentVideoId;
-
-  // If we're telling everyone the video changed, reset position.
-  if(opts.replace){
-    next.position = 0;
-    next.playing = false;
-    next.at = now;
-    next.kind = 'youtube';
-    next.src = patch.src || currentVideoId;
-  } else if(player && ytReady){
-    try{
-      next.position = Number(player.getCurrentTime?.() || 0);
-      next.playing = player.getPlayerState?.() === 1;
-      next.at = now;
-    }catch{}
-  }
-
-  next.at = next.at || now;
-  currentState = next;
-
-  broadcast({ type:'state', state: next });
-
-  // Update local controls preview
-  refreshControls();
-}
-
-function applyRemoteState(state){
-  if(!state || typeof state !== 'object') return;
-
-  const targetId = state.src;
-  const isNewVideo = state.kind === 'youtube' && targetId && targetId !== currentVideoId;
-
-  currentState = state;
-  currentVideoId = targetId;
-
-  if(isNewVideo){
-    // Show a tap-to-play overlay until the guest interacts
-    loadVideoForGuest(targetId);
-  } else if(player && ytReady){
-    applyPlaybackState(state);
-  } else if(state.kind === 'youtube' && targetId){
-    // Player not yet ready; retry once ready
-    loadVideoForGuest(targetId);
-  }
-}
-
 async function loadVideoForGuest(videoId){
+  if(!videoId) return;
   stageEmpty.hidden = true;
   ytWrap.hidden = false;
 
@@ -1487,36 +1695,92 @@ async function loadVideoForGuest(videoId){
         width: '100%',
         height: '100%',
         playerVars: {
-          controls: 0,
-          disablekb: 1,
-          modestbranding: 1,
-          rel: 0,
-          playsinline: 1,
-          fs: 0,
-          iv_load_policy: 3,
-          origin: location.origin
+          controls: 0, disablekb: 1, modestbranding: 1,
+          rel: 0, playsinline: 1, fs: 0, iv_load_policy: 3,
+          origin: location.origin,
         },
         events: {
           onReady: () => {
             ytReady = true;
-            // Show the tap overlay for guests so they can enable playback
             if(!userHasInteracted) tapPlay.hidden = false;
             resolve();
           },
-          onStateChange: (e) => {
-            if(applyingRemote) return;
-            // Guests don't push state.
-          },
-          onError: () => {
-            toast('That YouTube video cannot be played here.');
-          }
+          onError: () => toast('That YouTube video cannot be played here.'),
         }
       });
     });
 
     applyPlaybackState(currentState);
-  } catch(err){
+  }catch(err){
     toast(err.message || 'Could not load the video.');
+  }
+}
+
+function buildLiveState(){
+  let pos = currentState.position || 0;
+  let playing = !!currentState.playing;
+  if(player && ytReady){
+    try{
+      pos = Number(player.getCurrentTime?.() || 0);
+      playing = player.getPlayerState?.() === 1;
+    }catch{}
+  }
+  return {
+    kind: 'youtube',
+    src: currentVideoId,
+    playing,
+    position: pos,
+    at: Date.now(),
+  };
+}
+
+function pushState(patch = {}, opts = {}){
+  if(!isHost) return;
+
+  const now = Date.now();
+  if(!opts.force && now - (lastPersist || 0) < 350) return;
+
+  let next;
+  if(opts.replace){
+    next = {
+      kind: 'youtube',
+      src: patch.src || currentVideoId,
+      playing: false,
+      position: 0,
+      at: now,
+    };
+  } else {
+    next = buildLiveState();
+  }
+  if(patch.position !== undefined && !opts.replace) next.position = patch.position;
+  if(patch.playing !== undefined && !opts.replace) next.playing = patch.playing;
+
+  currentState = next;
+
+  // Send via PeerJS
+  broadcastPeer({ type:'state', state: next });
+
+  // Persist to Supabase on a throttle
+  if(now - lastPersist > 8000 || opts.persist){
+    lastPersist = now;
+    persistState(room.id, next).catch(()=>{});
+  }
+
+  refreshControls();
+}
+
+function applyRemoteState(state){
+  if(!state || typeof state !== 'object') return;
+  const targetId = state.src;
+  const isNewVideo = targetId && targetId !== currentVideoId;
+
+  currentState = state;
+  currentVideoId = targetId;
+
+  if(isNewVideo){
+    loadVideoForGuest(targetId).then(() => applyPlaybackState(state));
+  } else if(player && ytReady){
+    applyPlaybackState(state);
   }
 }
 
@@ -1535,11 +1799,8 @@ function applyPlaybackState(state){
     }
     const isPlaying = player.getPlayerState?.() === 1;
     if(state.playing && !isPlaying){
-      if(userHasInteracted){
-        player.playVideo();
-      } else {
-        tapPlay.hidden = false;
-      }
+      if(userHasInteracted) player.playVideo();
+      else tapPlay.hidden = false;
     } else if(!state.playing && isPlaying){
       player.pauseVideo();
     }
@@ -1549,18 +1810,9 @@ function applyPlaybackState(state){
   refreshControls();
 }
 
-/* -------------------------------------------------- heartbeat */
-function startHeartbeat(){
-  clearInterval(heartbeatTimer);
-  heartbeatTimer = setInterval(() => {
-    if(!isHost) return;
-    if(currentState.kind === 'youtube' && player && ytReady){
-      pushState({}, { force:true });
-    }
-  }, HEARTBEAT_MS);
-}
-
-/* -------------------------------------------------- controls */
+/* =========================================================
+   Controls
+   ========================================================= */
 function setupControls(){
   playBtn.addEventListener('click', () => {
     if(!isHost || !player || !ytReady) return;
@@ -1572,7 +1824,7 @@ function setupControls(){
     setTimeout(() => {
       applyingRemote = false;
       pushState({}, { force:true });
-    }, 300);
+    }, 250);
   });
 
   muteBtn.addEventListener('click', () => {
@@ -1587,9 +1839,7 @@ function setupControls(){
     draggingSeek = true;
     if(player && ytReady){
       const d = Number(player.getDuration?.() || 0);
-      if(d > 0){
-        timeNow.textContent = fmtTime((Number(seek.value)/1000) * d);
-      }
+      if(d > 0) timeNow.textContent = fmtTime((Number(seek.value)/1000) * d);
     }
   });
 
@@ -1604,7 +1854,7 @@ function setupControls(){
     setTimeout(() => {
       applyingRemote = false;
       pushState({ position: target, at: Date.now() }, { force:true });
-    }, 500);
+    }, 400);
   });
 
   sourceBar.addEventListener('submit', (e) => {
@@ -1616,7 +1866,7 @@ function setupControls(){
     if(!id){ toast('That does not look like a YouTube link.'); return; }
     sourceInput.value = '';
     sourceInput.blur();
-    loadVideo(id);
+    loadVideoAsHost(id);
   });
 
   // Progress ticker
@@ -1630,7 +1880,6 @@ function setupControls(){
         timeNow.textContent = fmtTime(cur);
         timeEnd.textContent = fmtTime(dur);
       }
-      // Update local play button state
       const playing = player.getPlayerState?.() === 1;
       playBtn.textContent = playing ? '❚❚' : '▶';
     }catch{}
@@ -1641,8 +1890,9 @@ function setupControls(){
     tapPlay.hidden = true;
     if(player && ytReady){
       try{ player.playVideo(); }catch{}
-      // Ask host for a fresh state so we resync
-      if(!isHost) sendToHost({ type:'request-sync' });
+      if(!isHost){
+        sendToHost({ type:'request-sync' });
+      }
       applyPlaybackState(currentState);
     }
   });
@@ -1662,6 +1912,14 @@ function setupControls(){
       leaveRoom();
     }
   });
+
+  // Host heartbeat
+  heartbeatTimer = setInterval(() => {
+    if(!isHost) return;
+    if(currentState.kind === 'youtube' && player && ytReady){
+      pushState({}, { force:true });
+    }
+  }, HEARTBEAT_MS);
 }
 
 function refreshControls(){
@@ -1671,12 +1929,11 @@ function refreshControls(){
   }
 }
 
-/* -------------------------------------------------- chat */
-const chatHistory = [];
-let unreadBadge = 0;
-
+/* =========================================================
+   Chat
+   ========================================================= */
 function appendChat(msg){
-  const mine = msg.clientId === clientId;
+  const mine = msg.client_id === clientId;
   const wrap = document.createElement('div');
   wrap.className = 'msg' + (mine ? ' me' : '');
 
@@ -1696,10 +1953,6 @@ function appendChat(msg){
   chatList.appendChild(wrap);
   chatList.scrollTop = chatList.scrollHeight;
 }
-function rememberChat(msg){
-  chatHistory.push(msg);
-  if(chatHistory.length > 60) chatHistory.shift();
-}
 function appendSystem(text){
   const el = document.createElement('div');
   el.className = 'msg sys';
@@ -1709,27 +1962,18 @@ function appendSystem(text){
 }
 
 function setupChat(){
-  composer.addEventListener('submit', (e) => {
+  composer.addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = chatInput.value.trim();
     if(!text) return;
     chatInput.value = '';
-
-    const msg = {
-      type:'chat',
-      clientId,
-      name: myName,
-      body: text.slice(0,600),
-      ts: Date.now()
-    };
-
-    appendChat(msg);
-    rememberChat(msg);
-
-    if(isHost){
-      broadcast(msg);
-    } else {
-      sendToHost(msg);
+    chatInput.style.height = '';
+    try{
+      await sendMessageDb(room.id, clientId, myName, text);
+      // The INSERT will come back via realtime and be rendered.
+    }catch(err){
+      toast(err.message || 'Message could not be sent.');
+      chatInput.value = text;
     }
   });
 
@@ -1738,7 +1982,9 @@ function setupChat(){
   });
 }
 
-/* -------------------------------------------------- reactions */
+/* =========================================================
+   Reactions (Supabase broadcast)
+   ========================================================= */
 function setupReactions(){
   reactionBar.addEventListener('click', (e) => {
     const btn = e.target.closest('.reaction-btn');
@@ -1746,11 +1992,9 @@ function setupReactions(){
     const emoji = btn.dataset.emoji;
     if(!emoji) return;
 
-    const payload = { type:'reaction', emoji, name: myName };
+    const payload = { emoji, name: myName };
     showReaction(payload);
-
-    if(isHost) broadcast(payload);
-    else sendToHost(payload);
+    channel?.send({ type:'broadcast', event:'reaction', payload });
   });
 }
 
@@ -1759,150 +2003,142 @@ function showReaction(payload){
   const el = document.createElement('span');
   el.className = 'reaction-float';
   el.textContent = payload.emoji;
-
   const x = 8 + Math.random() * 84;
   el.style.left = `${x}%`;
   el.style.setProperty('--drift', `${(Math.random()*60 - 30).toFixed(1)}deg`);
   const scale = 0.9 + Math.random() * 0.3;
   el.style.fontSize = `${Math.round(36 * scale)}px`;
-
   reactionLayer.appendChild(el);
   const cleanup = () => { if(el.parentNode) el.parentNode.removeChild(el); };
   el.addEventListener('animationend', cleanup, { once:true });
   setTimeout(cleanup, 3600);
 }
 
-/* -------------------------------------------------- chrome */
+/* =========================================================
+   Chrome
+   ========================================================= */
 function setupChrome(){
   codeChip.addEventListener('click', async () => {
-    try{
-      await navigator.clipboard.writeText(roomCode);
-      toast('Room code copied.');
-    }catch{
-      toast(`Room code: ${roomCode}`, 4000);
-    }
+    try{ await navigator.clipboard.writeText(room.code); toast('Room code copied.'); }
+    catch{ toast(`Room code: ${room.code}`, 4000); }
   });
 
   shareBtn.addEventListener('click', async () => {
     const url = new URL(location.href);
-    url.search = '';
-    url.searchParams.set('c', roomCode);
-    const text = `Join my Watch Together room with code ${roomCode}`;
-
+    url.search = `?room=${room.code}`;
+    const data = {
+      title:'Watch Together',
+      text:`Join my room with code ${room.code}`,
+      url: url.toString(),
+    };
     if(navigator.share){
-      try{
-        await navigator.share({ title:'Watch Together', text, url: url.toString() });
-        return;
-      }catch{}
+      try{ await navigator.share(data); return; }catch{}
     }
-    try{
-      await navigator.clipboard.writeText(url.toString());
-      toast('Invite link copied.');
-    }catch{
-      toast(`Room code: ${roomCode}`, 4000);
-    }
+    try{ await navigator.clipboard.writeText(url.toString()); toast('Invite link copied.'); }
+    catch{ toast(`Room code: ${room.code}`, 4000); }
   });
 }
 
-function updateOnlineCount(){
-  const total = isHost ? connections.length + 1 : 1 + (hostConn ? 1 : 0);
-  onlineCount.textContent = String(Math.min(total, MAX_PARTICIPANTS));
-}
-
-/* -------------------------------------------------- fullscreen */
+/* =========================================================
+   Fullscreen
+   ========================================================= */
 function setupFullscreen(){
   fsBtn.addEventListener('click', toggleFullscreen);
   fsExit.addEventListener('click', () => {
-    if(document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
   });
   document.addEventListener('fullscreenchange', () => {
     const active = document.fullscreenElement === roomApp;
     document.body.classList.toggle('is-fullscreen', active);
-    // Best-effort landscape lock on touch devices
     if(active){
       const coarse = window.matchMedia?.('(pointer: coarse)').matches;
       if(coarse && screen.orientation?.lock){
-        screen.orientation.lock('landscape').catch(() => {});
+        screen.orientation.lock('landscape').catch(()=>{});
       }
     } else {
       try{ screen.orientation?.unlock?.(); }catch{}
     }
   });
 }
-
 function toggleFullscreen(){
   if(document.fullscreenElement){
-    document.exitFullscreen().catch(() => {});
+    document.exitFullscreen().catch(()=>{});
   } else if(roomApp.requestFullscreen){
-    roomApp.requestFullscreen({ navigationUI:'hide' }).catch(() => {
-      toast('Fullscreen is not available here.');
-    });
+    roomApp.requestFullscreen({ navigationUI:'hide' }).catch(() => toast('Fullscreen is not available here.'));
   } else {
     toast('Fullscreen is not available here.');
   }
 }
 
-/* -------------------------------------------------- leave */
-function leaveRoom({ endRoom = false } = {}){
-  if(amILeaving) return;
-  amILeaving = true;
-
-  clearInterval(heartbeatTimer);
-
-  if(endRoom && isHost){
-    broadcast({ type:'chat', clientId:'system', name:'System', body:'The host ended the session.', ts: Date.now() });
-  }
-
-  if(peer){
-    try{ peer.destroy(); }catch{}
-    peer = null;
-  }
-
-  setTimeout(() => {
-    location.href = location.pathname;
-  }, 200);
+/* =========================================================
+   Participant upkeep
+   ========================================================= */
+function startParticipantHeartbeat(){
+  clearInterval(participantTimer);
+  participantTimer = setInterval(() => {
+    if(leaving) return;
+    touchParticipant(room.id, clientId).catch(()=>{});
+  }, 25000);
 }
 
-/* -------------------------------------------------- unload */
-window.addEventListener('beforeunload', () => {
-  if(amILeaving) return;
-  if(peer){
-    try{ peer.destroy(); }catch{}
+/* =========================================================
+   Leave / cleanup
+   ========================================================= */
+function endSession(reason){
+  if(leaving) return;
+  leaving = true;
+  clearInterval(heartbeatTimer);
+  clearInterval(participantTimer);
+  clearTimeout(hostGraceTimer);
+  try{ player?.destroy(); }catch{}
+  try{ peer?.destroy(); }catch{}
+  toast(reason, 3000);
+  setTimeout(() => { location.href = location.pathname; }, 1600);
+}
+
+async function leaveRoom({ endRoom=false } = {}){
+  if(leaving) return;
+  leaving = true;
+
+  clearInterval(heartbeatTimer);
+  clearInterval(participantTimer);
+  clearTimeout(hostGraceTimer);
+  try{ player?.destroy(); }catch{}
+
+  if(endRoom && isHost && channel){
+    channel.send({ type:'broadcast', event:'reaction', payload:{ emoji:'👋', name:'System' } });
   }
+
+  if(peer){ try{ peer.destroy(); }catch{} peer = null; }
+
+  if(channel){
+    try{ await channel.untrack(); }catch{}
+    try{ await sb.removeChannel(channel); }catch{}
+    channel = null;
+  }
+
+  try{ await leaveRoomDb(room.id, clientId); }catch{}
+  if(endRoom) try{ await closeRoomDb(room.id); }catch{}
+
+  location.href = location.pathname;
+}
+
+/* On tab hide/show, refresh presence */
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState !== 'visible') return;
+  if(!channel || leaving) return;
+  channel.track({
+    name: myName,
+    is_host: isHost,
+    joined_at: new Date().toISOString(),
+  }).catch(()=>{});
+  if(room) touchParticipant(room.id, clientId).catch(()=>{});
 });
 
-/* -------------------------------------------------- request-sync from guest */
-// Add this handler on the host side: when a guest asks for a sync,
-// reply with the current live state.
-(function patchHandleMessage(){
-  const originalHandle = handleMessage;
-  window.handleMessage = function(data, fromConn){
-    if(data && data.type === 'request-sync'){
-      if(isHost && currentVideoId){
-        sendTo(fromConn, { type:'state', state: buildLiveState() });
-      }
-      return;
-    }
-    return originalHandle(data, fromConn);
-  };
-})();
-
-// Swap the reference used inside setupConnection
-const _origSetupConnection = setupConnection;
-setupConnection = function(conn, isHostSide){
-  if(!connections.includes(conn)) connections.push(conn);
-  conn.on('data', (data) => window.handleMessage(data, conn));
-  conn.on('close', () => {
-    connections = connections.filter(c => c !== conn);
-    const nm = peerNames[conn.peer] || 'Guest';
-    delete peerNames[conn.peer];
-    updateOnlineCount();
-    appendSystem(`${nm} left the room.`);
-    if(isHost) broadcast({ type:'presence', names: namesList() });
-  });
-  conn.on('error', (err) => console.warn('[PEER] conn error', err));
-  if(!isHostSide) updateOnlineCount();
-};
+window.addEventListener('beforeunload', () => {
+  if(leaving) return;
+  try{ peer?.destroy(); }catch{}
+});
 </script>
 </body>
 </html>
