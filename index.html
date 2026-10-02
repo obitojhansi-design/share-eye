@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#08080f">
 <title>Watch Together — private rooms</title>
+
+<!-- Speed: warm up connections before we need them -->
+<link rel="preconnect" href="https://www.youtube.com" crossorigin>
+<link rel="preconnect" href="https://i.ytimg.com" crossorigin>
+<link rel="preconnect" href="https://www.google.com" crossorigin>
+<link rel="preconnect" href="https://googlevideo.com" crossorigin>
+<link rel="preconnect" href="https://fbqdpoqkbzbzvbrywaek.supabase.co" crossorigin>
+<link rel="dns-prefetch" href="https://esm.sh">
+<link rel="dns-prefetch" href="https://unpkg.com">
+
+<!-- Speed: start YouTube API download in parallel with page load -->
+<script src="https://www.youtube.com/iframe_api" async></script>
+
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
@@ -142,7 +155,6 @@ body.is-fullscreen .fs-exit{display:flex}
 
 <div class="bg-glow" aria-hidden="true"></div>
 
-<!-- ==================== LANDING ==================== -->
 <main class="landing-wrap" id="landing">
   <header class="brand">
     <div class="brand-mark" aria-hidden="true">
@@ -175,7 +187,6 @@ body.is-fullscreen .fs-exit{display:flex}
   <p class="footnote">No accounts, no uploads, no library. The room code is the only key.</p>
 </main>
 
-<!-- ==================== ROOM ==================== -->
 <div class="room-app" id="roomApp" hidden>
   <div class="boot" id="bootScreen">
     <div class="spinner" aria-hidden="true"></div>
@@ -277,7 +288,6 @@ const PEER_PREFIX = 'wtw-yt-v2-';
 const MAX_PARTICIPANTS = 3;
 const HEARTBEAT_MS = 5000;
 const DRIFT_TOLERANCE = 2;
-const YT_API_SRC = 'https://www.youtube.com/iframe_api';
 const CHAT_HISTORY = 60;
 const K_NAME = 'wtw.name';
 const K_ID = 'wtw.clientId';
@@ -355,27 +365,37 @@ function friendly(err, fallback='Something went wrong. Please try again.'){
 }
 
 /* =========================================================
-   YouTube API
+   YouTube API — resolves against the preloaded script
    ========================================================= */
 let ytApiPromise = null;
 function loadYouTubeApi(){
   if(ytApiPromise) return ytApiPromise;
   ytApiPromise = new Promise((resolve, reject) => {
     if(window.YT && window.YT.Player){ resolve(window.YT); return; }
-    const timer = setTimeout(() => reject(new Error('YouTube took too long to load.')), 15000);
+    const timer = setTimeout(() => reject(new Error('YouTube API load timeout.')), 20000);
     const prev = window.onYouTubeIframeAPIReady;
     window.onYouTubeIframeAPIReady = () => {
       clearTimeout(timer);
       if(typeof prev === 'function') prev();
       resolve(window.YT);
     };
-    const s = document.createElement('script');
-    s.src = YT_API_SRC; s.async = true;
-    s.onerror = () => { clearTimeout(timer); reject(new Error('YouTube could not be loaded.')); };
-    document.head.appendChild(s);
+    // Belt and braces: also poll briefly, in case the script already fired
+    // its callback before this module ran.
+    let tries = 0;
+    const poll = setInterval(() => {
+      tries++;
+      if(window.YT && window.YT.Player){
+        clearInterval(poll);
+        clearTimeout(timer);
+        resolve(window.YT);
+      } else if(tries > 40){
+        clearInterval(poll);
+      }
+    }, 250);
   });
   return ytApiPromise;
 }
+
 function parseYouTubeId(input){
   const raw = String(input || '').trim();
   if(!raw) return null;
@@ -397,7 +417,7 @@ function parseYouTubeId(input){
 }
 
 /* =========================================================
-   Supabase operations
+   Supabase ops
    ========================================================= */
 async function createRoom(name){
   const clientId = getClientId();
@@ -475,7 +495,7 @@ async function sendMessageDb(roomId, clientId, name, body){
 }
 
 /* =========================================================
-   LANDING — DOM refs and wiring
+   LANDING
    ========================================================= */
 const landing       = $('#landing');
 const nameInput     = $('#nameInput');
@@ -606,7 +626,6 @@ let hostConn = null;
 let peerNames = {};
 
 let heartbeatTimer = 0;
-let persistTimer = 0;
 let lastPersist = 0;
 let hostGraceTimer = 0;
 let participantTimer = 0;
@@ -647,13 +666,13 @@ function bootDone(){
 }
 
 /* =========================================================
-   MAIN BOOT
+   MAIN BOOT — parallelized for speed
    ========================================================= */
 const params = new URLSearchParams(location.search);
 const roomCodeParam = normalizeCode(params.get('room') || params.get('c'));
 
 async function bootInit(){
-  // --- 1. Switch to room mode FIRST so the boot screen is visible
+  // 1. Switch to room mode immediately so the boot screen is visible
   document.body.classList.remove('landing');
   document.body.classList.add('room');
   if(landing) landing.hidden = true;
@@ -667,7 +686,7 @@ async function bootInit(){
   if(code.length !== CODE_LEN){ bootFail('That room code is not valid.'); return; }
   codeValueEl.textContent = code;
 
-  // --- 2. Look up the room
+  // 2. Find the room (blocking — needed before we can do anything else)
   let found;
   try{
     found = await withTimeout(findRoom(code), 12000, 'findRoom');
@@ -681,7 +700,7 @@ async function bootInit(){
   room = found;
   isHost = room.host_id === clientId;
 
-  // --- 3. Closed / expired handling
+  // 3. Closed / expired handling
   if(roomIsClosed(room)){
     const expired = !room.expires_at || new Date(room.expires_at).getTime() <= Date.now();
     if(isHost && !expired){
@@ -708,26 +727,15 @@ async function bootInit(){
     return;
   }
 
-  // --- 4. Guest: participant count
+  // 4. Guest: participant count check (quick)
   if(!isHost){
     try{
-      const count = await withSoftTimeout(countParticipants(room.id), 4000, 0);
+      const count = await withSoftTimeout(countParticipants(room.id), 3000, 0);
       if(count >= MAX_PARTICIPANTS){ bootFail('This room is full.'); return; }
     }catch{}
   }
 
-  // --- 5. Join participants table
-  try{
-    await withTimeout(joinRoom(room, myName), 10000, 'joinRoom');
-  }catch(err){
-    console.error('[boot] joinRoom failed', err);
-    bootFail('Could not join the room. Please retry.', { retry:true });
-    return;
-  }
-
-  document.title = `Room ${code} — Watch Together`;
-
-  // --- 6. Wire UI
+  // 5. Wire UI *before* joinRoom resolves, so we're ready to draw the instant it does
   setupPlayer();
   setupControls();
   setupChat();
@@ -741,47 +749,59 @@ async function bootInit(){
   muteBtn.disabled = !isHost;
   sourceBar.hidden = !isHost;
 
-  // --- 7. Load chat history
+  // 6. Join participants table
   try{
-    const rows = await withSoftTimeout(loadRecentMessages(room.id), 4000, []);
-    if(rows && rows.length){
-      chatList.replaceChildren();
-      for(const m of rows) appendChat({
-        client_id: m.client_id, name: m.name, body: m.body,
-        ts: new Date(m.created_at).getTime(),
-      });
-      chatList.scrollTop = chatList.scrollHeight;
-    }
-  }catch{}
-
-  // --- 8. Supabase realtime channel
-  boot('Joining the room…');
-  try{
-    await withTimeout(openChannel(), 12000, 'realtime');
+    await withTimeout(joinRoom(room, myName), 10000, 'joinRoom');
   }catch(err){
-    console.error('[boot] channel failed', err);
-    bootFail('Could not connect to the room. Please retry.', { retry:true });
+    console.error('[boot] joinRoom failed', err);
+    bootFail('Could not join the room. Please retry.', { retry:true });
     return;
   }
 
-  // --- 9. PeerJS for playback sync
-  setupPeerJs();
-
-  // --- 10. Done
+  // 7. Show the room!
   bootDone();
+  document.title = `Room ${code} — Watch Together`;
   appendSystem(isHost ? 'You created this room.' : 'You joined the room.');
-  startParticipantHeartbeat();
 
-  // --- 11. Restore persisted state
+  // =========================================================
+  // 8. KICK OFF BACKGROUND WORK IN PARALLEL
+  // =========================================================
+
+  // (A) START LOADING THE VIDEO RIGHT NOW — this is the critical path
   if(room.state && room.state.kind === 'youtube' && room.state.src){
     currentState = room.state;
-    if(isHost){
-      currentVideoId = room.state.src;
-      loadVideoAsHost(room.state.src, { restore:true }).catch(()=>{});
-    } else {
-      loadVideoForGuest(room.state.src).catch(()=>{});
-    }
+    currentVideoId = room.state.src;
+    const p = isHost
+      ? loadVideoAsHost(room.state.src, { restore:true })
+      : loadVideoForGuest(room.state.src);
+    p.catch(err => console.warn('[video] initial load failed', err));
   }
+
+  // (B) Chat history — background
+  loadRecentMessages(room.id)
+    .then(rows => {
+      if(rows && rows.length){
+        chatList.replaceChildren();
+        for(const m of rows) appendChat({
+          client_id: m.client_id, name: m.name, body: m.body,
+          ts: new Date(m.created_at).getTime(),
+        });
+        chatList.scrollTop = chatList.scrollHeight;
+      }
+    })
+    .catch(() => {});
+
+  // (C) Realtime channel — background
+  openChannel().catch(err => {
+    console.warn('[RT] channel failed', err);
+    // Non-fatal: chat inserts won't stream, reactions won't broadcast.
+  });
+
+  // (D) PeerJS — background
+  try{ setupPeerJs(); }catch(err){ console.warn('[PEER] setup failed', err); }
+
+  // (E) Participant heartbeat
+  startParticipantHeartbeat();
 }
 
 /* =========================================================
@@ -1383,7 +1403,7 @@ window.addEventListener('beforeunload', () => {
 });
 
 /* =========================================================
-   KICK OFF — after all declarations
+   Kick off
    ========================================================= */
 if(roomCodeParam){
   bootInit().catch(err => {
