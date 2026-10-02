@@ -2,550 +2,140 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#08080f">
-<meta name="description" content="A tiny private YouTube room for two or three.">
 <title>Watch Together — private rooms</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%237c5cff'/%3E%3Cpath d='M8 6v12l10-6-10-6z' fill='white'/%3E%3C/svg%3E">
 <style>
-/* =========================================================
-   Base
-   ========================================================= */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
 html,body{height:100%}
-
 :root{
-  --bg:#08080f;
-  --bg-soft:#0e0e1a;
-  --text:#f2f2ff;
-  --muted:#9a9ab5;
-  --accent:#7c5cff;
-  --accent-2:#4f8cff;
-  --danger:#ff5c5c;
-  --ok:#4ade80;
-  --radius:18px;
-  --radius-sm:14px;
-  --shadow:0 8px 32px rgba(0,0,0,.35);
+  --bg:#08080f;--bg-soft:#0e0e1a;--text:#f2f2ff;--muted:#9a9ab5;
+  --accent:#7c5cff;--accent-2:#4f8cff;--danger:#ff5c5c;--ok:#4ade80;
+  --radius:18px;--radius-sm:14px;--shadow:0 8px 32px rgba(0,0,0,.35);
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
 }
-
-body{
-  font-family:var(--font);
-  background:var(--bg);
-  color:var(--text);
-  line-height:1.5;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  overscroll-behavior-y:none;
-}
-
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
 input,button,textarea,select{font-size:16px;font-family:inherit}
 
-/* =========================================================
-   Landing
-   ========================================================= */
-body.landing{
-  display:flex;align-items:center;justify-content:center;
-  min-height:100dvh;min-height:100svh;
-  padding:24px 16px calc(24px + env(safe-area-inset-bottom,0px));
-  overflow-x:hidden;position:relative;
-}
-.bg-glow{
-  position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:
-    radial-gradient(60% 50% at 15% 10%, rgba(124,92,255,.18), transparent 70%),
-    radial-gradient(55% 45% at 90% 20%, rgba(79,140,255,.16), transparent 70%),
-    radial-gradient(70% 60% at 50% 100%, rgba(124,92,255,.10), transparent 70%);
-}
-.landing-wrap{
-  position:relative;z-index:1;width:100%;max-width:440px;
-  display:flex;flex-direction:column;gap:16px;
-}
+/* Landing */
+body.landing{display:flex;align-items:center;justify-content:center;min-height:100dvh;padding:24px 16px calc(24px + env(safe-area-inset-bottom,0px));overflow-x:hidden;position:relative}
+.bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(60% 50% at 15% 10%, rgba(124,92,255,.18), transparent 70%),radial-gradient(55% 45% at 90% 20%, rgba(79,140,255,.16), transparent 70%),radial-gradient(70% 60% at 50% 100%, rgba(124,92,255,.10), transparent 70%)}
+.landing-wrap{position:relative;z-index:1;width:100%;max-width:440px;display:flex;flex-direction:column;gap:16px}
 .brand{text-align:center;padding:8px 0 4px}
-.brand-mark{
-  width:52px;height:52px;margin:0 auto 12px;
-  border-radius:16px;display:grid;place-items:center;color:#fff;
-  background:linear-gradient(135deg,var(--accent),var(--accent-2));
-  box-shadow:0 10px 30px rgba(124,92,255,.35);
-}
+.brand-mark{width:52px;height:52px;margin:0 auto 12px;border-radius:16px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 10px 30px rgba(124,92,255,.35)}
 .brand-name{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
 .brand-tag{margin-top:6px;font-size:14.5px;color:var(--muted)}
-
 .card{padding:18px;border-radius:var(--radius)}
-.glass{
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);
-  box-shadow:var(--shadow);
-  backdrop-filter:blur(14px) saturate(140%);
-  -webkit-backdrop-filter:blur(14px) saturate(140%);
-}
-
+.glass{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);box-shadow:var(--shadow);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .field{display:block}
-.field-label{
-  display:block;font-size:12px;font-weight:700;
-  letter-spacing:.08em;text-transform:uppercase;
-  color:var(--muted);margin-bottom:8px;
-}
+.field-label{display:block;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 .field-help{margin-top:8px;font-size:12.5px;color:var(--muted)}
-
-.input{
-  width:100%;min-height:50px;padding:14px 16px;
-  border-radius:var(--radius-sm);
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(0,0,0,.35);
-  color:#fff;font-size:16px;outline:none;
-  transition:border-color .15s ease, box-shadow .15s ease;
-}
+.input{width:100%;min-height:50px;padding:14px 16px;border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.35);color:#fff;font-size:16px;outline:none}
+.input:focus{border-color:rgba(124,92,255,.7);box-shadow:0 0 0 3px rgba(124,92,255,.22)}
 .input::placeholder{color:#6f6f8d}
-.input:focus{
-  border-color:rgba(124,92,255,.7);
-  box-shadow:0 0 0 3px rgba(124,92,255,.22);
-}
-.code-input{
-  text-align:center;text-transform:uppercase;
-  letter-spacing:.35em;font-weight:800;font-size:20px;
-  padding:16px 12px;background:rgba(0,0,0,.5);
-  border-color:rgba(255,255,255,.16);
-  caret-color:var(--accent);
-}
-
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  min-height:50px;padding:14px 18px;
-  border-radius:var(--radius-sm);
-  border:1px solid transparent;
-  font-family:inherit;font-size:16px;font-weight:700;
-  color:#fff;cursor:pointer;text-decoration:none;
-  user-select:none;touch-action:manipulation;
-  transition:transform .12s ease, background .15s ease,
-    border-color .15s ease, opacity .15s ease;
-}
+.code-input{text-align:center;text-transform:uppercase;letter-spacing:.35em;font-weight:800;font-size:20px;padding:16px 12px;background:rgba(0,0,0,.5)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:14px 18px;border-radius:var(--radius-sm);border:1px solid transparent;font-family:inherit;font-size:16px;font-weight:700;color:#fff;cursor:pointer;text-decoration:none;user-select:none;touch-action:manipulation;transition:transform .12s ease, background .15s ease, opacity .15s ease}
 .btn:active{transform:scale(.98)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
-.btn-primary{
-  background:linear-gradient(135deg,var(--accent),var(--accent-2));
-  box-shadow:0 8px 24px rgba(80,100,255,.32);
-}
-.btn-ghost{
-  background:rgba(255,255,255,.07);
-  border-color:rgba(255,255,255,.14);
-}
-.btn-danger{
-  background:rgba(255,60,60,.12);
-  border-color:rgba(255,80,80,.35);
-  color:#ffb4b4;
-}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 8px 24px rgba(80,100,255,.32)}
+.btn-ghost{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.14)}
+.btn-danger{background:rgba(255,60,60,.12);border-color:rgba(255,80,80,.35);color:#ffb4b4}
 .btn-sm{min-height:42px;padding:10px 14px;font-size:15px}
 .btn-block{width:100%}
 .btn-send{width:auto;min-width:84px;padding:0 18px}
 .btn-ico{font-size:18px;line-height:1}
-
 .join-row{display:flex;gap:10px;align-items:stretch}
 .join-row .input{flex:1;min-width:0}
 .join-row .btn{width:auto;min-width:92px}
-
-.divider{
-  display:flex;align-items:center;gap:12px;
-  margin:18px 0;color:var(--muted);
-  font-size:12px;letter-spacing:.08em;text-transform:uppercase;
-}
-.divider::before,.divider::after{
-  content:"";flex:1;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
-}
-
+.divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)}
 .status{min-height:22px;margin-top:8px;text-align:center;font-size:14px;color:#ffb4b4}
 .status.ok{color:#b9ffd0}
+.footnote{margin-top:18px;padding:0 8px;text-align:center;font-size:12.5px;color:var(--muted);line-height:1.5}
 
-.footnote{
-  margin-top:18px;padding:0 8px;text-align:center;
-  font-size:12.5px;color:var(--muted);line-height:1.5;
-}
-
-/* =========================================================
-   Toast
-   ========================================================= */
-.toast{
-  position:fixed;left:50%;
-  bottom:calc(18px + env(safe-area-inset-bottom,0px));
-  transform:translateX(-50%) translateY(20px);
-  max-width:calc(100vw - 32px);
-  padding:12px 18px;border-radius:999px;
-  background:rgba(18,18,30,.94);
-  border:1px solid rgba(255,255,255,.12);
-  color:#fff;font-size:14px;text-align:center;
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  opacity:0;pointer-events:none;
-  transition:opacity .25s ease, transform .25s ease;
-  z-index:9999;
-}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);max-width:calc(100vw - 32px);padding:12px 18px;border-radius:999px;background:rgba(18,18,30,.94);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:14px;text-align:center;backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;z-index:9999}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* =========================================================
-   Room shell
-   ========================================================= */
-body.room{height:100dvh;height:100svh;overflow:hidden;background:var(--bg)}
-
-.room-app{
-  display:flex;flex-direction:column;
-  height:100dvh;height:100svh;
-  width:100%;max-width:100%;overflow:hidden;
-  background:var(--bg-soft);position:relative;
-}
-
-/* Boot */
-.boot{
-  position:fixed;inset:0;z-index:5000;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:16px;
-  padding:24px;background:var(--bg);
-}
+/* Room */
+body.room{height:100dvh;overflow:hidden;background:var(--bg)}
+.room-app{display:flex;flex-direction:column;height:100dvh;width:100%;overflow:hidden;background:var(--bg-soft);position:relative}
+.boot{position:fixed;inset:0;z-index:5000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:var(--bg)}
 .boot.is-error .spinner{display:none}
 .boot.is-error .boot-text{color:#f2f2ff;font-weight:600;max-width:32ch}
 .boot-text{font-size:16px;color:var(--muted);text-align:center;max-width:32ch}
-.spinner{
-  width:36px;height:36px;border-radius:50%;
-  border:3px solid rgba(255,255,255,.12);
-  border-top-color:var(--accent);
-  animation:spin .8s linear infinite;
-}
+.spinner{width:36px;height:36px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:var(--accent);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* Topbar */
-.topbar{
-  display:flex;align-items:center;gap:8px;flex-shrink:0;
-  padding:10px 12px;
-  padding-top:calc(10px + env(safe-area-inset-top,0px));
-  background:rgba(10,10,18,.85);
-  border-bottom:1px solid rgba(255,255,255,.06);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  z-index:20;
-}
-.icon-btn{
-  width:44px;height:44px;flex-shrink:0;
-  display:grid;place-items:center;
-  border-radius:var(--radius-sm);
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(255,255,255,.06);
-  color:#fff;font-size:18px;cursor:pointer;
-  text-decoration:none;transition:background .15s ease;
-}
-.icon-btn:active{background:rgba(255,255,255,.12)}
+.topbar{display:flex;align-items:center;gap:8px;flex-shrink:0;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));background:rgba(10,10,18,.85);border-bottom:1px solid rgba(255,255,255,.06);backdrop-filter:blur(12px);z-index:20}
+.icon-btn{width:44px;height:44px;flex-shrink:0;display:grid;place-items:center;border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.06);color:#fff;font-size:18px;cursor:pointer;text-decoration:none}
+.code-chip{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:6px 10px;border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.05);color:#fff;cursor:pointer;font-family:inherit}
+.code-label{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.code-value{font-size:20px;font-weight:800;letter-spacing:.18em;font-variant-numeric:tabular-nums;line-height:1.1}
+.online-chip{display:flex;align-items:center;gap:6px;flex-shrink:0;padding:9px 12px;border-radius:999px;border:1px solid rgba(80,255,140,.25);background:rgba(80,255,140,.10);color:#b9ffd0;font-size:14px;font-weight:700}
+.online-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
 
-.code-chip{
-  flex:1;min-width:0;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:1px;
-  padding:6px 10px;border-radius:var(--radius-sm);
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(255,255,255,.05);
-  color:#fff;cursor:pointer;font-family:inherit;
-  transition:background .15s ease;
-}
-.code-chip:active{background:rgba(255,255,255,.12)}
-.code-label{
-  font-size:10px;font-weight:700;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--muted);
-}
-.code-value{
-  font-size:20px;font-weight:800;letter-spacing:.18em;
-  font-variant-numeric:tabular-nums;line-height:1.1;
-}
-
-.online-chip{
-  display:flex;align-items:center;gap:6px;flex-shrink:0;
-  padding:9px 12px;border-radius:999px;
-  border:1px solid rgba(80,255,140,.25);
-  background:rgba(80,255,140,.10);
-  color:#b9ffd0;font-size:14px;font-weight:700;
-}
-.online-dot{
-  width:8px;height:8px;border-radius:50%;
-  background:var(--ok);box-shadow:0 0 8px var(--ok);
-}
-
-/* Stage */
-.stage{
-  position:relative;flex-shrink:0;
-  width:100%;aspect-ratio:16/9;max-height:42dvh;
-  background:#000;overflow:hidden;
-}
-.stage-empty{
-  position:absolute;inset:0;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:4px;
-  padding:20px;text-align:center;color:var(--muted);
-}
+.stage{position:relative;flex-shrink:0;width:100%;aspect-ratio:16/9;max-height:42dvh;background:#000;overflow:hidden}
+.stage-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:20px;text-align:center;color:var(--muted)}
 .stage-empty-title{font-size:16px;font-weight:700;color:#ddd}
 .stage-empty-sub{font-size:13.5px}
-
 #ytWrap{position:absolute;inset:0;width:100%;height:100%}
 #ytPlayer,#ytPlayer iframe{width:100%;height:100%;border:0}
+.tap-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;padding:14px 22px;border-radius:999px;border:1px solid rgba(255,255,255,.20);background:rgba(0,0,0,.75);color:#fff;font-size:16px;font-weight:700;cursor:pointer;backdrop-filter:blur(8px)}
 
-.tap-play{
-  position:absolute;left:50%;top:50%;
-  transform:translate(-50%,-50%);z-index:5;
-  padding:14px 22px;border-radius:999px;
-  border:1px solid rgba(255,255,255,.20);
-  background:rgba(0,0,0,.75);color:#fff;
-  font-size:16px;font-weight:700;cursor:pointer;
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  animation:floatPulse 2s ease-in-out infinite;
-}
-@keyframes floatPulse{
-  0%,100%{transform:translate(-50%,-50%) scale(1)}
-  50%{transform:translate(-50%,-50%) scale(1.05)}
-}
-
-/* Source bar */
-.source-bar{
-  display:flex;gap:8px;flex-shrink:0;
-  padding:8px 10px;
-  background:rgba(10,10,18,.65);
-  border-bottom:1px solid rgba(255,255,255,.05);
-}
-.source-bar .input{
-  flex:1;min-width:0;min-height:42px;
-  padding:10px 12px;font-size:14px;
-}
+.source-bar{display:flex;gap:8px;flex-shrink:0;padding:8px 10px;background:rgba(10,10,18,.65);border-bottom:1px solid rgba(255,255,255,.05)}
+.source-bar .input{flex:1;min-width:0;min-height:42px;padding:10px 12px;font-size:14px}
 .source-bar .btn{width:auto;min-height:42px;padding:0 14px;font-size:14px}
 
-/* Controls */
-.controls{
-  display:flex;align-items:center;gap:6px;flex-shrink:0;
-  padding:6px 10px;
-  background:rgba(10,10,18,.75);
-  border-bottom:1px solid rgba(255,255,255,.05);
-}
-.ctl{
-  width:40px;height:40px;flex-shrink:0;
-  display:grid;place-items:center;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(255,255,255,.06);
-  color:#fff;font-size:16px;cursor:pointer;
-  transition:background .15s ease;
-}
-.ctl:active:not(:disabled){background:rgba(255,255,255,.12)}
+.controls{display:flex;align-items:center;gap:6px;flex-shrink:0;padding:6px 10px;background:rgba(10,10,18,.75);border-bottom:1px solid rgba(255,255,255,.05)}
+.ctl{width:40px;height:40px;flex-shrink:0;display:grid;place-items:center;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.06);color:#fff;font-size:16px;cursor:pointer}
 .ctl:disabled{opacity:.35;cursor:not-allowed}
-.time{
-  min-width:36px;flex-shrink:0;text-align:center;
-  font-size:12px;color:var(--muted);
-  font-variant-numeric:tabular-nums;
-}
+.time{min-width:36px;flex-shrink:0;text-align:center;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .seek{flex:1;min-width:0;height:24px;accent-color:var(--accent)}
 .seek:disabled{opacity:.35}
 
-/* Chat */
-.chat{
-  flex:1 1 auto;min-height:0;
-  display:flex;flex-direction:column;
-  background:rgba(8,8,16,.55);
-}
-.chat-head{
-  display:flex;align-items:center;justify-content:space-between;
-  flex-shrink:0;padding:8px 14px;
-  border-bottom:1px solid rgba(255,255,255,.05);
-}
-.chat-title{
-  font-size:13px;font-weight:800;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--muted);
-}
+.chat{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;background:rgba(8,8,16,.55)}
+.chat-head{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.05)}
+.chat-title{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .chat-hint{font-size:12px;color:var(--muted)}
-
-.chat-list{
-  flex:1;min-height:0;overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
-  display:flex;flex-direction:column;gap:8px;
-  padding:10px 14px;
-}
-.chat-list::-webkit-scrollbar{width:6px}
-.chat-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:99px}
-
-.msg{
-  max-width:85%;align-self:flex-start;
-  padding:8px 12px;border-radius:16px;
-  border:1px solid rgba(255,255,255,.06);
-  background:rgba(255,255,255,.07);
-  font-size:14.5px;line-height:1.4;
-  overflow-wrap:anywhere;word-wrap:break-word;
-}
-.msg.me{
-  align-self:flex-end;
-  background:linear-gradient(135deg,rgba(124,92,255,.35),rgba(79,140,255,.35));
-  border-color:rgba(124,92,255,.40);
-}
-.msg .who{
-  display:block;margin-bottom:2px;
-  font-size:11px;font-weight:800;
-  letter-spacing:.04em;text-transform:uppercase;
-  color:var(--muted);
-}
+.chat-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:10px 14px}
+.msg{max-width:85%;align-self:flex-start;padding:8px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.07);font-size:14.5px;line-height:1.4;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:linear-gradient(135deg,rgba(124,92,255,.35),rgba(79,140,255,.35));border-color:rgba(124,92,255,.40)}
+.msg .who{display:block;margin-bottom:2px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .msg.me .who{color:#d9ccff}
 .msg .body{color:#f2f2ff}
-.msg .time{
-  display:block;margin-top:4px;text-align:right;
-  font-size:10.5px;color:var(--muted);
-}
-.msg.sys{
-  align-self:center;max-width:92%;
-  background:rgba(255,255,255,.04);
-  border-color:transparent;color:var(--muted);
-  font-size:12.5px;text-align:center;border-radius:999px;
-}
+.msg .time{display:block;margin-top:4px;text-align:right;font-size:10.5px;color:var(--muted)}
+.msg.sys{align-self:center;max-width:92%;background:rgba(255,255,255,.04);border-color:transparent;color:var(--muted);font-size:12.5px;text-align:center;border-radius:999px}
 
-/* Composer */
-.composer{
-  display:flex;gap:8px;flex-shrink:0;
-  padding:8px 10px;
-  padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));
-  background:rgba(10,10,18,.90);
-  border-top:1px solid rgba(255,255,255,.06);
-}
-.composer .input{
-  flex:1;min-width:0;min-height:48px;
-  padding:12px 14px;font-size:16px;
-}
-.room-foot{
-  flex-shrink:0;padding:10px 14px;
-  padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
-  background:rgba(10,10,18,.95);
-  border-top:1px solid rgba(255,255,255,.06);
-}
+.composer{display:flex;gap:8px;flex-shrink:0;padding:8px 10px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));background:rgba(10,10,18,.90);border-top:1px solid rgba(255,255,255,.06)}
+.composer .input{flex:1;min-width:0;min-height:48px;padding:12px 14px;font-size:16px}
+.room-foot{flex-shrink:0;padding:10px 14px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));background:rgba(10,10,18,.95);border-top:1px solid rgba(255,255,255,.06)}
 
-/* Reactions */
-.reactions{
-  display:flex;gap:4px;flex-shrink:0;
-  padding:6px 10px;overflow-x:auto;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
-  background:rgba(10,10,18,.55);
-  border-bottom:1px solid rgba(255,255,255,.05);
-}
+.reactions{display:flex;gap:4px;flex-shrink:0;padding:6px 10px;overflow-x:auto;scrollbar-width:none;background:rgba(10,10,18,.55);border-bottom:1px solid rgba(255,255,255,.05)}
 .reactions::-webkit-scrollbar{display:none}
-.reaction-btn{
-  flex:0 0 auto;width:40px;height:40px;
-  display:grid;place-items:center;padding:0;
-  border-radius:50%;
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(255,255,255,.06);
-  color:#fff;font-size:20px;line-height:1;
-  cursor:pointer;user-select:none;
-  touch-action:manipulation;
-  transition:transform .12s ease, background .15s ease;
-}
-.reaction-btn:active{transform:scale(.88);background:rgba(255,255,255,.16)}
+.reaction-btn{flex:0 0 auto;width:40px;height:40px;display:grid;place-items:center;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.06);color:#fff;font-size:20px;line-height:1;cursor:pointer}
+.reaction-layer{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:6}
+.reaction-float{position:absolute;bottom:8%;left:50%;font-size:40px;line-height:1;transform:translateX(-50%);filter:drop-shadow(0 4px 10px rgba(0,0,0,.55));animation:reactionFloat 3s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes reactionFloat{0%{transform:translate(-50%,12px) scale(.5);opacity:0}12%{transform:translate(-50%,0) scale(1.15);opacity:1}24%{transform:translate(-50%,-10px) scale(1);opacity:1}100%{transform:translate(-50%,-260px) scale(.9) rotate(var(--drift,0deg));opacity:0}}
 
-.reaction-layer{
-  position:absolute;inset:0;overflow:hidden;
-  pointer-events:none;z-index:6;
-}
-.reaction-float{
-  position:absolute;bottom:8%;left:50%;
-  font-size:40px;line-height:1;
-  transform:translateX(-50%);
-  will-change:transform, opacity;
-  filter:drop-shadow(0 4px 10px rgba(0,0,0,.55));
-  user-select:none;
-  animation:reactionFloat 3s cubic-bezier(.22,1,.36,1) forwards;
-}
-@keyframes reactionFloat{
-  0%{transform:translate(-50%,12px) scale(.5);opacity:0}
-  12%{transform:translate(-50%,0) scale(1.15);opacity:1}
-  24%{transform:translate(-50%,-10px) scale(1);opacity:1}
-  100%{transform:translate(-50%,-260px) scale(.9) rotate(var(--drift,0deg));opacity:0}
-}
-
-/* Fullscreen */
-.fs-exit{
-  display:none;position:fixed;
-  top:calc(10px + env(safe-area-inset-top,0px));
-  right:calc(10px + env(safe-area-inset-right,0px));
-  z-index:9999;width:44px;height:44px;
-  align-items:center;justify-content:center;padding:0;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.20);
-  background:rgba(0,0,0,.72);color:#fff;
-  font-size:18px;font-weight:700;line-height:1;cursor:pointer;
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  box-shadow:0 6px 18px rgba(0,0,0,.45);
-  user-select:none;touch-action:manipulation;
-  transition:transform .12s ease, background .15s ease;
-}
-.fs-exit:active{transform:scale(.92);background:rgba(0,0,0,.88)}
+.fs-exit{display:none;position:fixed;top:calc(10px + env(safe-area-inset-top,0px));right:calc(10px + env(safe-area-inset-right,0px));z-index:9999;width:44px;height:44px;align-items:center;justify-content:center;padding:0;border-radius:12px;border:1px solid rgba(255,255,255,.20);background:rgba(0,0,0,.72);color:#fff;font-size:18px;font-weight:700;cursor:pointer}
 body.is-fullscreen .fs-exit{display:flex}
+.room-app:fullscreen{display:grid;grid-template-columns:1fr min(360px,34vw);grid-template-rows:1fr auto;grid-template-areas:"stage chat" "controls composer";width:100%;height:100%;background:#000}
+.room-app:fullscreen .topbar,.room-app:fullscreen .source-bar,.room-app:fullscreen .room-foot{display:none!important}
+.room-app:fullscreen .stage{grid-area:stage;aspect-ratio:auto;max-height:none;height:100%}
+.room-app:fullscreen .controls{grid-area:controls;background:rgba(6,6,12,.92)}
+.room-app:fullscreen .chat{grid-area:chat;border-left:1px solid rgba(255,255,255,.08);background:rgba(8,8,16,.96)}
+.room-app:fullscreen .composer{grid-area:composer;border-left:1px solid rgba(255,255,255,.08)}
 
-.room-app:fullscreen{
-  display:grid;
-  grid-template-columns:1fr min(360px,34vw);
-  grid-template-rows:1fr auto;
-  grid-template-areas:"stage chat" "controls composer";
-  width:100%;height:100%;max-width:none;max-height:none;
-  background:#000;gap:0;padding:0;
-}
-.room-app:fullscreen .topbar,
-.room-app:fullscreen .source-bar,
-.room-app:fullscreen .room-foot{display:none!important}
-.room-app:fullscreen .stage{
-  grid-area:stage;aspect-ratio:auto;
-  max-height:none;height:100%;width:100%;
-}
-.room-app:fullscreen .controls{
-  grid-area:controls;
-  background:rgba(6,6,12,.92);
-  border-top:1px solid rgba(255,255,255,.08);
-  border-bottom:0;
-}
-.room-app:fullscreen .chat{
-  grid-area:chat;
-  border-left:1px solid rgba(255,255,255,.08);
-  background:rgba(8,8,16,.96);
-}
-.room-app:fullscreen .composer{
-  grid-area:composer;
-  border-left:1px solid rgba(255,255,255,.08);
-  border-top:1px solid rgba(255,255,255,.06);
-}
-@media (orientation:portrait){
-  .room-app:fullscreen{
-    grid-template-columns:1fr;grid-template-rows:1fr auto;
-    grid-template-areas:"stage" "controls";
-  }
-  .room-app:fullscreen .chat,
-  .room-app:fullscreen .composer{display:none}
-}
-@media (min-width:1024px){
-  .room-app:fullscreen{grid-template-columns:1fr min(420px,30vw)}
-}
-
-/* Larger screens */
 @media (min-width:700px){
   .landing-wrap{max-width:480px}
   .brand-name{font-size:30px}
-  .room-app{
-    max-width:720px;margin:0 auto;
-    border-left:1px solid rgba(255,255,255,.06);
-    border-right:1px solid rgba(255,255,255,.06);
-  }
+  .room-app{max-width:720px;margin:0 auto;border-left:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.06)}
   .stage{max-height:52dvh}
   .chat-list{padding:14px 18px}
-  .code-value{font-size:22px}
 }
-@media (min-width:1024px){
-  .room-app{max-width:820px}
-  .stage{max-height:55dvh}
-}
-
+@media (min-width:1024px){.room-app{max-width:820px}.stage{max-height:55dvh}}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{
-    animation-duration:.01ms!important;
-    animation-iteration-count:1!important;
-    transition-duration:.01ms!important;
-    scroll-behavior:auto!important;
-  }
-}
 </style>
 </head>
 <body class="landing">
@@ -556,9 +146,7 @@ body.is-fullscreen .fs-exit{display:flex}
 <main class="landing-wrap" id="landing">
   <header class="brand">
     <div class="brand-mark" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-        <path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor"/>
-      </svg>
+      <svg viewBox="0 0 24 24" width="22" height="22"><path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor"/></svg>
     </div>
     <h1 class="brand-name">Watch Together</h1>
     <p class="brand-tag">A tiny private YouTube room for two or three.</p>
@@ -567,40 +155,28 @@ body.is-fullscreen .fs-exit{display:flex}
   <section class="card glass">
     <label class="field" for="nameInput">
       <span class="field-label">Your name</span>
-      <input id="nameInput" class="input" type="text" maxlength="18"
-             placeholder="e.g. Sam" autocomplete="nickname" enterkeyhint="done">
+      <input id="nameInput" class="input" type="text" maxlength="18" placeholder="e.g. Sam" autocomplete="nickname">
     </label>
     <p class="field-help">Shown next to your chat messages.</p>
   </section>
 
-  <section class="card glass" aria-label="Room actions">
+  <section class="card glass">
     <button id="createBtn" class="btn btn-primary btn-block" type="button">
-      <span class="btn-ico" aria-hidden="true">＋</span> Create Room
+      <span class="btn-ico">＋</span> Create Room
     </button>
-
     <div class="divider"><span>or join one</span></div>
-
     <form id="joinForm" class="join-row" autocomplete="off" novalidate>
-      <input id="codeInput" class="input code-input" type="text"
-             inputmode="text" autocapitalize="characters" autocomplete="off"
-             spellcheck="false" maxlength="6" placeholder="ROOM CODE"
-             aria-label="Room code">
+      <input id="codeInput" class="input code-input" type="text" maxlength="6" placeholder="ROOM CODE" aria-label="Room code">
       <button class="btn btn-ghost" type="submit">Join</button>
     </form>
   </section>
 
   <p id="landingStatus" class="status" role="status" aria-live="polite"></p>
-
-  <p class="footnote">
-    No accounts, no uploads, no library. The room code is the only key —
-    keep it between the people you trust.
-  </p>
+  <p class="footnote">No accounts, no uploads, no library. The room code is the only key.</p>
 </main>
 
 <!-- ==================== ROOM ==================== -->
 <div class="room-app" id="roomApp" hidden>
-
-  <!-- Boot -->
   <div class="boot" id="bootScreen">
     <div class="spinner" aria-hidden="true"></div>
     <p class="boot-text" id="bootText" role="status" aria-live="polite">Connecting…</p>
@@ -608,160 +184,85 @@ body.is-fullscreen .fs-exit{display:flex}
     <button id="bootBack" class="btn btn-ghost" type="button" hidden>Back to start</button>
   </div>
 
-  <!-- Room content -->
   <div id="roomContent" hidden style="display:flex;flex-direction:column;height:100%;min-height:0">
-
     <header class="topbar">
-      <a class="icon-btn" href="?" id="backLink" aria-label="Leave room and go back">←</a>
-
-      <button class="code-chip" id="codeChip" type="button" aria-label="Copy room code">
+      <a class="icon-btn" href="?" id="backLink" aria-label="Leave room">←</a>
+      <button class="code-chip" id="codeChip" type="button">
         <span class="code-label">CODE</span>
         <span class="code-value" id="codeValue">------</span>
       </button>
-
-      <button class="icon-btn" id="shareBtn" type="button" aria-label="Share room">↗</button>
-
-      <div class="online-chip" id="onlineChip" title="People online">
-        <span class="online-dot" aria-hidden="true"></span>
+      <button class="icon-btn" id="shareBtn" type="button">↗</button>
+      <div class="online-chip" title="People online">
+        <span class="online-dot"></span>
         <span id="onlineCount">1</span>
       </div>
     </header>
 
-    <section class="stage" id="stage" aria-label="Watch area">
+    <section class="stage" id="stage">
       <div class="stage-empty" id="stageEmpty">
         <p class="stage-empty-title">Nothing playing yet</p>
         <p class="stage-empty-sub" id="stageEmptySub">Paste a YouTube link below.</p>
       </div>
-
       <div id="ytWrap" hidden><div id="ytPlayer"></div></div>
-
       <button class="tap-play" id="tapPlay" type="button" hidden>▶ Tap to play</button>
-
       <div class="reaction-layer" id="reactionLayer" aria-hidden="true"></div>
     </section>
 
     <form class="source-bar" id="sourceBar" autocomplete="off" novalidate hidden>
-      <input id="sourceInput" class="input" type="text"
-             placeholder="YouTube link or video ID"
-             aria-label="YouTube link or video ID"
-             autocapitalize="off" spellcheck="false">
-      <button class="btn btn-primary btn-sm" type="submit" id="sourceGo">Load</button>
+      <input id="sourceInput" class="input" type="text" placeholder="YouTube link or video ID" autocapitalize="off" spellcheck="false">
+      <button class="btn btn-primary btn-sm" type="submit">Load</button>
     </form>
 
-    <div class="controls" id="controls">
-      <button class="ctl" id="playBtn" type="button" aria-label="Play or pause" disabled>▶</button>
+    <div class="controls">
+      <button class="ctl" id="playBtn" type="button" disabled>▶</button>
       <span class="time" id="timeNow">0:00</span>
-      <input class="seek" id="seek" type="range" min="0" max="1000" value="0" step="1"
-             aria-label="Seek within video" disabled>
+      <input class="seek" id="seek" type="range" min="0" max="1000" value="0" disabled>
       <span class="time" id="timeEnd">0:00</span>
-      <button class="ctl" id="muteBtn" type="button" aria-label="Mute or unmute" disabled>🔊</button>
-      <button class="ctl" id="fsBtn" type="button" aria-label="Fullscreen">⛶</button>
+      <button class="ctl" id="muteBtn" type="button" disabled>🔊</button>
+      <button class="ctl" id="fsBtn" type="button">⛶</button>
     </div>
 
-    <section class="chat" aria-label="Chat">
+    <section class="chat">
       <div class="chat-head">
         <span class="chat-title">Chat</span>
         <span class="chat-hint" id="chatHint"></span>
       </div>
-
-      <div class="reactions" id="reactionBar" role="toolbar" aria-label="Send a reaction">
-        <button class="reaction-btn" type="button" data-emoji="❤️" aria-label="Love">❤️</button>
-        <button class="reaction-btn" type="button" data-emoji="😂" aria-label="Laugh">😂</button>
-        <button class="reaction-btn" type="button" data-emoji="😮" aria-label="Wow">😮</button>
-        <button class="reaction-btn" type="button" data-emoji="😢" aria-label="Sad">😢</button>
-        <button class="reaction-btn" type="button" data-emoji="👏" aria-label="Clap">👏</button>
-        <button class="reaction-btn" type="button" data-emoji="🔥" aria-label="Fire">🔥</button>
-        <button class="reaction-btn" type="button" data-emoji="👍" aria-label="Thumbs up">👍</button>
-        <button class="reaction-btn" type="button" data-emoji="🎉" aria-label="Celebrate">🎉</button>
+      <div class="reactions" id="reactionBar">
+        <button class="reaction-btn" type="button" data-emoji="❤️">❤️</button>
+        <button class="reaction-btn" type="button" data-emoji="😂">😂</button>
+        <button class="reaction-btn" type="button" data-emoji="😮">😮</button>
+        <button class="reaction-btn" type="button" data-emoji="😢">😢</button>
+        <button class="reaction-btn" type="button" data-emoji="👏">👏</button>
+        <button class="reaction-btn" type="button" data-emoji="🔥">🔥</button>
+        <button class="reaction-btn" type="button" data-emoji="👍">👍</button>
+        <button class="reaction-btn" type="button" data-emoji="🎉">🎉</button>
       </div>
-
-      <div class="chat-list" id="chatList" role="log" aria-live="polite" aria-relevant="additions"></div>
+      <div class="chat-list" id="chatList" role="log" aria-live="polite"></div>
     </section>
 
     <form class="composer" id="composer" autocomplete="off">
-      <input id="chatInput" class="input" type="text" maxlength="600"
-             placeholder="Write a message…" aria-label="Message" enterkeyhint="send">
-      <button class="btn btn-primary btn-send" type="submit" aria-label="Send message">Send</button>
+      <input id="chatInput" class="input" type="text" maxlength="600" placeholder="Write a message…">
+      <button class="btn btn-primary btn-send" type="submit">Send</button>
     </form>
 
     <footer class="room-foot">
       <button class="btn btn-danger btn-block" id="leaveBtn" type="button">Leave Room</button>
     </footer>
-
   </div>
 
-  <button class="fs-exit" id="fsExit" type="button" aria-label="Exit fullscreen">✕</button>
+  <button class="fs-exit" id="fsExit" type="button">✕</button>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<!--
-  ============================================================
-  REQUIRED SUPABASE SCHEMA
-  ============================================================
-  Run this once in your Supabase project's SQL editor.
-
-  create table if not exists rooms (
-    id uuid primary key default gen_random_uuid(),
-    code text unique not null,
-    host_id text not null,
-    state jsonb default '{}'::jsonb,
-    created_at timestamptz default now(),
-    updated_at timestamptz default now(),
-    expires_at timestamptz default (now() + interval '12 hours'),
-    closed_at timestamptz
-  );
-  create index if not exists rooms_code_idx on rooms(code);
-
-  create table if not exists participants (
-    id uuid primary key default gen_random_uuid(),
-    room_id uuid references rooms(id) on delete cascade,
-    client_id text not null,
-    name text not null,
-    is_host boolean default false,
-    joined_at timestamptz default now(),
-    last_seen timestamptz default now(),
-    unique(room_id, client_id)
-  );
-  create index if not exists participants_room_idx on participants(room_id);
-
-  create table if not exists messages (
-    id uuid primary key default gen_random_uuid(),
-    room_id uuid references rooms(id) on delete cascade,
-    client_id text not null,
-    name text not null,
-    body text not null,
-    created_at timestamptz default now()
-  );
-  create index if not exists messages_room_idx on messages(room_id, created_at desc);
-
-  alter table rooms enable row level security;
-  alter table participants enable row level security;
-  alter table messages enable row level security;
-
-  create policy "rooms_all"        on rooms        for all using (true) with check (true);
-  create policy "participants_all" on participants for all using (true) with check (true);
-  create policy "messages_all"     on messages     for all using (true) with check (true);
-
-  alter publication supabase_realtime add table messages;
-  ============================================================
--->
-
-<!-- PeerJS for low-latency playback sync -->
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 
 <script type="module">
-/* =========================================================
-   Watch Together — YouTube hybrid
-   ---------------------------------------------------------
-   • Supabase  → rooms, participants, chat history,
-                 presence, reactions broadcast
-   • PeerJS    → low-latency YouTube playback sync
-   ========================================================= */
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
-/* -------------------------------------------------- CONFIG */
+/* =========================================================
+   CONFIG
+   ========================================================= */
 const SUPABASE_URL  = 'https://fbqdpoqkbzbzvbrywaek.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_n-I8VgfUDnH3J35KZrLYsw_j1XTn0E5';
 
@@ -770,22 +271,22 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON, {
   realtime: { params: { eventsPerSecond: 10 } },
 });
 
-/* -------------------------------------------------- Constants */
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const CODE_LEN = 6;
-const PEER_PREFIX = 'wtw-yt-v1-';
+const PEER_PREFIX = 'wtw-yt-v2-';
 const MAX_PARTICIPANTS = 3;
 const HEARTBEAT_MS = 5000;
 const DRIFT_TOLERANCE = 2;
 const YT_API_SRC = 'https://www.youtube.com/iframe_api';
 const CHAT_HISTORY = 60;
-
 const K_NAME = 'wtw.name';
 const K_ID = 'wtw.clientId';
 
-/* -------------------------------------------------- Helpers */
 const $ = sel => document.querySelector(sel);
 
+/* =========================================================
+   Helpers
+   ========================================================= */
 function uuid(){
   if(crypto.randomUUID) return crypto.randomUUID();
   const b = new Uint8Array(16);
@@ -803,44 +304,38 @@ function getClientId(){
 }
 function getName(){ try{ return localStorage.getItem(K_NAME) || ''; }catch{ return ''; } }
 function setName(n){ try{ localStorage.setItem(K_NAME, n); }catch{} }
-
-function makeCode(len = CODE_LEN){
-  const bytes = new Uint8Array(len);
+function makeCode(){
+  const bytes = new Uint8Array(CODE_LEN);
   crypto.getRandomValues(bytes);
   let out = '';
-  for(let i=0;i<len;i++) out += ALPHABET[bytes[i] % ALPHABET.length];
+  for(let i=0;i<CODE_LEN;i++) out += ALPHABET[bytes[i] % ALPHABET.length];
   return out;
 }
 function normalizeCode(raw){
   return String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,CODE_LEN);
 }
-
 function fmtTime(sec){
   const total = Math.max(0, Math.floor(Number(sec) || 0));
   const h = Math.floor(total/3600);
   const m = Math.floor((total%3600)/60);
   const s = total%60;
-  return h>0
-    ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-    : `${m}:${String(s).padStart(2,'0')}`;
+  return h>0 ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+             : `${m}:${String(s).padStart(2,'0')}`;
 }
-
 let toastTimer = 0;
 function toast(msg, ms = 2600){
   const el = $('#toast');
+  if(!el) return;
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), ms);
 }
-
 function withTimeout(promise, ms, label){
   let timer;
   return Promise.race([
     Promise.resolve(promise).finally(() => clearTimeout(timer)),
-    new Promise((_, rej) => {
-      timer = setTimeout(() => rej(new Error(`${label} timed out.`)), ms);
-    }),
+    new Promise((_, rej) => { timer = setTimeout(() => rej(new Error(`${label} timed out.`)), ms); }),
   ]);
 }
 function withSoftTimeout(promise, ms, fallback){
@@ -850,18 +345,18 @@ function withSoftTimeout(promise, ms, fallback){
     new Promise(res => { timer = setTimeout(() => res(fallback), ms); }),
   ]);
 }
-
 function friendly(err, fallback='Something went wrong. Please try again.'){
   const msg = String(err?.message || err || '');
-  if(/Failed to fetch|NetworkError|Load failed/i.test(msg))
-    return "Can't reach the server. Check your internet connection.";
+  if(/Failed to fetch|NetworkError|Load failed/i.test(msg)) return "Can't reach the server.";
   if(/duplicate key/i.test(msg)) return 'That code is already taken.';
   if(/row-level security|permission denied/i.test(msg)) return 'That action is not allowed.';
-  if(/JWT|apikey/i.test(msg)) return 'The app is not configured correctly.';
+  if(/JWT|apikey/i.test(msg)) return 'App is not configured correctly.';
   return fallback;
 }
 
-/* -------------------------------------------------- YouTube API */
+/* =========================================================
+   YouTube API
+   ========================================================= */
 let ytApiPromise = null;
 function loadYouTubeApi(){
   if(ytApiPromise) return ytApiPromise;
@@ -875,21 +370,18 @@ function loadYouTubeApi(){
       resolve(window.YT);
     };
     const s = document.createElement('script');
-    s.src = YT_API_SRC;
-    s.async = true;
+    s.src = YT_API_SRC; s.async = true;
     s.onerror = () => { clearTimeout(timer); reject(new Error('YouTube could not be loaded.')); };
     document.head.appendChild(s);
   });
   return ytApiPromise;
 }
-
 function parseYouTubeId(input){
   const raw = String(input || '').trim();
   if(!raw) return null;
   if(/^[A-Za-z0-9_-]{11}$/.test(raw)) return raw;
   let url;
-  try{ url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`); }
-  catch { return null; }
+  try{ url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`); } catch { return null; }
   const host = url.hostname.replace(/^www\.|^m\./i,'');
   if(host === 'youtu.be'){
     const id = url.pathname.slice(1).split('/')[0];
@@ -905,26 +397,17 @@ function parseYouTubeId(input){
 }
 
 /* =========================================================
-   SUPABASE OPERATIONS
+   Supabase operations
    ========================================================= */
 async function createRoom(name){
   const clientId = getClientId();
   let lastErr = null;
-
   for(let attempt=0; attempt<6; attempt++){
     const code = makeCode();
-    const { data, error } = await sb
-      .from('rooms')
-      .insert({ code, host_id: clientId })
-      .select('*')
-      .single();
-
+    const { data, error } = await sb.from('rooms').insert({ code, host_id: clientId }).select('*').single();
     if(!error && data){
       const { error: pErr } = await sb.from('participants').insert({
-        room_id: data.id,
-        client_id: clientId,
-        name,
-        is_host: true,
+        room_id: data.id, client_id: clientId, name, is_host: true,
       });
       if(pErr && pErr.code !== '23505') throw new Error(friendly(pErr));
       return data;
@@ -932,115 +415,67 @@ async function createRoom(name){
     lastErr = error;
     if(error && error.code !== '23505') break;
   }
-  throw new Error(friendly(lastErr, 'Could not create a room. Please try again.'));
+  throw new Error(friendly(lastErr, 'Could not create a room.'));
 }
-
 async function findRoom(code){
-  const { data, error } = await sb
-    .from('rooms')
-    .select('*')
-    .eq('code', code)
-    .maybeSingle();
+  const { data, error } = await sb.from('rooms').select('*').eq('code', code).maybeSingle();
   if(error) throw new Error(friendly(error, 'Could not check that room code.'));
   return data || null;
 }
-
 function roomIsClosed(room){
   if(!room) return true;
   if(room.closed_at) return true;
-  if(new Date(room.expires_at).getTime() < Date.now()) return true;
+  if(room.expires_at && new Date(room.expires_at).getTime() < Date.now()) return true;
   return false;
 }
-
 async function joinRoom(room, name){
   const clientId = getClientId();
-  const { data, error } = await sb
-    .from('participants')
-    .upsert({
-      room_id: room.id,
-      client_id: clientId,
-      name,
-      is_host: room.host_id === clientId,
-      joined_at: new Date().toISOString(),
-      last_seen: new Date().toISOString(),
-    }, { onConflict: 'room_id,client_id' })
-    .select('*')
-    .single();
+  const { data, error } = await sb.from('participants').upsert({
+    room_id: room.id, client_id: clientId, name,
+    is_host: room.host_id === clientId,
+    joined_at: new Date().toISOString(),
+    last_seen: new Date().toISOString(),
+  }, { onConflict: 'room_id,client_id' }).select('*').single();
   if(error) throw new Error(friendly(error, 'Could not join that room.'));
   return data;
 }
-
 async function leaveRoomDb(roomId, clientId){
-  await sb.from('participants')
-    .delete()
-    .eq('room_id', roomId)
-    .eq('client_id', clientId);
+  await sb.from('participants').delete().eq('room_id', roomId).eq('client_id', clientId);
 }
-
 async function closeRoomDb(roomId){
-  await sb.from('rooms').update({
-    closed_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }).eq('id', roomId);
+  await sb.from('rooms').update({ closed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', roomId);
 }
-
 async function reopenRoomDb(roomId){
-  const { error } = await sb.from('rooms').update({
-    closed_at: null,
-    updated_at: new Date().toISOString(),
-  }).eq('id', roomId);
+  const { error } = await sb.from('rooms').update({ closed_at: null, updated_at: new Date().toISOString() }).eq('id', roomId);
   if(error) throw new Error(friendly(error, 'Could not reopen the room.'));
 }
-
-async function persistState(roomId, state){
-  await sb.from('rooms').update({
-    state,
-    updated_at: new Date().toISOString(),
-  }).eq('id', roomId);
+async function persistStateDb(roomId, state){
+  await sb.from('rooms').update({ state, updated_at: new Date().toISOString() }).eq('id', roomId);
 }
-
 async function touchParticipant(roomId, clientId){
-  await sb.from('participants')
-    .update({ last_seen: new Date().toISOString() })
-    .eq('room_id', roomId)
-    .eq('client_id', clientId);
+  await sb.from('participants').update({ last_seen: new Date().toISOString() }).eq('room_id', roomId).eq('client_id', clientId);
 }
-
 async function countParticipants(roomId){
   const cutoff = new Date(Date.now() - 60000).toISOString();
-  const { count } = await sb
-    .from('participants')
-    .select('id', { count:'exact', head:true })
-    .eq('room_id', roomId)
-    .gte('last_seen', cutoff);
+  const { count } = await sb.from('participants').select('id', { count:'exact', head:true }).eq('room_id', roomId).gte('last_seen', cutoff);
   return count || 0;
 }
-
 async function loadRecentMessages(roomId, limit = CHAT_HISTORY){
-  const { data, error } = await sb
-    .from('messages')
+  const { data, error } = await sb.from('messages')
     .select('id, client_id, name, body, created_at')
-    .eq('room_id', roomId)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+    .eq('room_id', roomId).order('created_at', { ascending: false }).limit(limit);
   if(error) return [];
   return data.reverse();
 }
-
 async function sendMessageDb(roomId, clientId, name, body){
   const clean = String(body || '').trim().slice(0, 600);
   if(!clean) return;
-  const { error } = await sb.from('messages').insert({
-    room_id: roomId,
-    client_id: clientId,
-    name,
-    body: clean,
-  });
+  const { error } = await sb.from('messages').insert({ room_id: roomId, client_id: clientId, name, body: clean });
   if(error) throw new Error(friendly(error, 'Message could not be sent.'));
 }
 
 /* =========================================================
-   LANDING PAGE
+   LANDING — DOM refs and wiring
    ========================================================= */
 const landing       = $('#landing');
 const nameInput     = $('#nameInput');
@@ -1052,13 +487,11 @@ const landingStatus = $('#landingStatus');
 nameInput.value = getName();
 nameInput.addEventListener('blur', () => {
   const v = nameInput.value.trim().slice(0,18);
-  nameInput.value = v;
-  setName(v);
+  nameInput.value = v; setName(v);
 });
 codeInput.addEventListener('input', () => {
   codeInput.value = normalizeCode(codeInput.value);
 });
-
 function currentName(){
   const n = (nameInput.value || '').trim().slice(0,18);
   if(n) setName(n);
@@ -1068,7 +501,6 @@ function setLandingStatus(msg, ok=false){
   landingStatus.textContent = msg || '';
   landingStatus.classList.toggle('ok', !!ok);
 }
-
 if(!getName()) setTimeout(() => nameInput.focus(), 250);
 
 createBtn.addEventListener('click', async () => {
@@ -1078,7 +510,6 @@ createBtn.addEventListener('click', async () => {
   setLandingStatus('Creating your room…', true);
   try{
     const room = await createRoom(name);
-    try{ sessionStorage.setItem('wtw.pendingRoom', room.code); }catch{}
     location.href = `?room=${encodeURIComponent(room.code)}&host=1`;
   }catch(err){
     setLandingStatus(err.message || 'Could not create a room.');
@@ -1093,8 +524,7 @@ joinForm.addEventListener('submit', async (e) => {
   const code = normalizeCode(codeInput.value);
   if(code.length !== CODE_LEN){
     setLandingStatus(`A room code is ${CODE_LEN} characters.`);
-    codeInput.focus();
-    return;
+    codeInput.focus(); return;
   }
   const btn = joinForm.querySelector('button[type=submit]');
   btn.disabled = true;
@@ -1103,7 +533,6 @@ joinForm.addEventListener('submit', async (e) => {
     const room = await findRoom(code);
     if(!room){ setLandingStatus('Room not found.'); btn.disabled = false; codeInput.select(); return; }
     if(roomIsClosed(room)){ setLandingStatus('That room has already ended.'); btn.disabled = false; return; }
-    try{ sessionStorage.setItem('wtw.pendingRoom', room.code); }catch{}
     location.href = `?room=${encodeURIComponent(room.code)}`;
   }catch(err){
     setLandingStatus(err.message || 'Could not join that room.');
@@ -1112,30 +541,21 @@ joinForm.addEventListener('submit', async (e) => {
 });
 
 /* =========================================================
-   ROOM
+   ROOM — DOM refs
    ========================================================= */
-const params = new URLSearchParams(location.search);
-const roomCodeParam = normalizeCode(params.get('room') || params.get('c'));
-const explicitHost  = params.get('host') === '1';
-
-if(roomCodeParam){
-  bootInit();
-}
-
-/* -------------------------------------------------- Refs */
 const roomApp     = $('#roomApp');
 const roomContent = $('#roomContent');
 const bootScreen  = $('#bootScreen');
 const bootText    = $('#bootText');
 const bootRetry   = $('#bootRetry');
 const bootBack    = $('#bootBack');
-const codeValue   = $('#codeValue');
+const codeValueEl = $('#codeValue');
 const codeChip    = $('#codeChip');
 const shareBtn    = $('#shareBtn');
 const backLink    = $('#backLink');
-const onlineCount = $('#onlineCount');
+const onlineCountEl = $('#onlineCount');
 
-const stage         = $('#stage');
+const stageEl       = $('#stage');
 const stageEmpty    = $('#stageEmpty');
 const stageEmptySub = $('#stageEmptySub');
 const ytWrap        = $('#ytWrap');
@@ -1146,12 +566,12 @@ const reactionLayer = $('#reactionLayer');
 const sourceBar   = $('#sourceBar');
 const sourceInput = $('#sourceInput');
 
-const playBtn  = $('#playBtn');
-const seek     = $('#seek');
-const timeNow  = $('#timeNow');
-const timeEnd  = $('#timeEnd');
-const muteBtn  = $('#muteBtn');
-const fsBtn    = $('#fsBtn');
+const playBtn = $('#playBtn');
+const seekEl  = $('#seek');
+const timeNow = $('#timeNow');
+const timeEnd = $('#timeEnd');
+const muteBtn = $('#muteBtn');
+const fsBtn   = $('#fsBtn');
 
 const chatList  = $('#chatList');
 const chatHint  = $('#chatHint');
@@ -1159,10 +579,12 @@ const composer  = $('#composer');
 const chatInput = $('#chatInput');
 
 const leaveBtn    = $('#leaveBtn');
-const fsExit      = $('#fsExit');
+const fsExitBtn   = $('#fsExit');
 const reactionBar = $('#reactionBar');
 
-/* -------------------------------------------------- Room state */
+/* =========================================================
+   ROOM — state
+   ========================================================= */
 const clientId = getClientId();
 let myName = getName().trim().slice(0,18);
 
@@ -1179,10 +601,9 @@ let userHasInteracted = false;
 let leaving = false;
 
 let peer = null;
-let peerConnections = [];   // host: all guest connections
-let hostConn = null;        // guest: single connection to host
-let peerReady = false;
-let peerNames = {};         // peerId -> name
+let peerConnections = [];
+let hostConn = null;
+let peerNames = {};
 
 let heartbeatTimer = 0;
 let persistTimer = 0;
@@ -1190,7 +611,9 @@ let lastPersist = 0;
 let hostGraceTimer = 0;
 let participantTimer = 0;
 
-/* -------------------------------------------------- Boot helpers */
+/* =========================================================
+   Boot screen helpers
+   ========================================================= */
 function boot(text){
   bootScreen.classList.remove('is-error');
   bootText.textContent = text;
@@ -1223,48 +646,45 @@ function bootDone(){
   roomContent.hidden = false;
 }
 
-/* -------------------------------------------------- Main init */
+/* =========================================================
+   MAIN BOOT
+   ========================================================= */
+const params = new URLSearchParams(location.search);
+const roomCodeParam = normalizeCode(params.get('room') || params.get('c'));
+
 async function bootInit(){
+  // --- 1. Switch to room mode FIRST so the boot screen is visible
+  document.body.classList.remove('landing');
+  document.body.classList.add('room');
+  if(landing) landing.hidden = true;
+  roomApp.hidden = false;
+  roomContent.hidden = true;
+
   boot('Connecting…');
 
-  if(!myName){
-    // fallback to sessionStorage
-    try{
-      const n = sessionStorage.getItem('wtw.name');
-      if(n) myName = n.trim().slice(0,18);
-    }catch{}
-  }
-  if(!myName){
-    bootFail('Please enter your name on the home page first.');
-    return;
-  }
-
+  if(!myName){ bootFail('Please enter your name on the home page first.'); return; }
   const code = roomCodeParam;
-  if(code.length !== CODE_LEN){
-    bootFail('That room code is not valid.');
-    return;
-  }
+  if(code.length !== CODE_LEN){ bootFail('That room code is not valid.'); return; }
+  codeValueEl.textContent = code;
 
-  codeValue.textContent = code;
-
+  // --- 2. Look up the room
   let found;
   try{
     found = await withTimeout(findRoom(code), 12000, 'findRoom');
   }catch(err){
+    console.error('[boot] findRoom failed', err);
     bootFail('Could not check the room. Please retry.', { retry:true });
     return;
   }
-
   if(!found){ bootFail('Room not found.'); return; }
 
   room = found;
   isHost = room.host_id === clientId;
 
-  // Closed / expired handling
+  // --- 3. Closed / expired handling
   if(roomIsClosed(room)){
     const expired = !room.expires_at || new Date(room.expires_at).getTime() <= Date.now();
     if(isHost && !expired){
-      // Offer reopen
       bootScreen.classList.add('is-error');
       bootText.textContent = 'This room was closed. Reopen it?';
       bootRetry.hidden = false;
@@ -1273,10 +693,8 @@ async function bootInit(){
       bootRetry.onclick = async () => {
         bootRetry.disabled = true;
         bootRetry.textContent = 'Reopening…';
-        try{
-          await reopenRoomDb(room.id);
-          location.reload();
-        }catch(err){
+        try{ await reopenRoomDb(room.id); location.reload(); }
+        catch(err){
           bootRetry.disabled = false;
           bootRetry.textContent = 'Try again';
           bootText.textContent = err.message || 'Could not reopen the room.';
@@ -1290,32 +708,26 @@ async function bootInit(){
     return;
   }
 
-  // Participant count check for guests
+  // --- 4. Guest: participant count
   if(!isHost){
     try{
       const count = await withSoftTimeout(countParticipants(room.id), 4000, 0);
-      if(count >= MAX_PARTICIPANTS){
-        bootFail('This room is full.');
-        return;
-      }
+      if(count >= MAX_PARTICIPANTS){ bootFail('This room is full.'); return; }
     }catch{}
   }
 
-  // Join participants table
+  // --- 5. Join participants table
   try{
     await withTimeout(joinRoom(room, myName), 10000, 'joinRoom');
   }catch(err){
+    console.error('[boot] joinRoom failed', err);
     bootFail('Could not join the room. Please retry.', { retry:true });
     return;
   }
 
-  // Set up UI now
-  document.body.classList.remove('landing');
-  document.body.classList.add('room');
-  landing.hidden = true;
-  roomApp.hidden = false;
   document.title = `Room ${code} — Watch Together`;
 
+  // --- 6. Wire UI
   setupPlayer();
   setupControls();
   setupChat();
@@ -1325,130 +737,103 @@ async function bootInit(){
 
   chatHint.textContent = isHost ? 'You are the host' : 'Only the host controls playback';
   playBtn.disabled = !isHost;
-  seek.disabled = !isHost;
+  seekEl.disabled = !isHost;
   muteBtn.disabled = !isHost;
   sourceBar.hidden = !isHost;
 
-  // Load recent chat history
+  // --- 7. Load chat history
   try{
     const rows = await withSoftTimeout(loadRecentMessages(room.id), 4000, []);
     if(rows && rows.length){
       chatList.replaceChildren();
-      for(const m of rows) appendChat({ ...m, client_id:m.client_id, name:m.name, body:m.body, ts:new Date(m.created_at).getTime() });
+      for(const m of rows) appendChat({
+        client_id: m.client_id, name: m.name, body: m.body,
+        ts: new Date(m.created_at).getTime(),
+      });
       chatList.scrollTop = chatList.scrollHeight;
     }
   }catch{}
 
-  // Connect Supabase channel
+  // --- 8. Supabase realtime channel
   boot('Joining the room…');
   try{
     await withTimeout(openChannel(), 12000, 'realtime');
   }catch(err){
+    console.error('[boot] channel failed', err);
     bootFail('Could not connect to the room. Please retry.', { retry:true });
     return;
   }
 
-  // Set up PeerJS
+  // --- 9. PeerJS for playback sync
   setupPeerJs();
 
-  // Boot done
+  // --- 10. Done
   bootDone();
   appendSystem(isHost ? 'You created this room.' : 'You joined the room.');
-
-  // Start participant heartbeat
   startParticipantHeartbeat();
 
-  // Show existing persisted state
+  // --- 11. Restore persisted state
   if(room.state && room.state.kind === 'youtube' && room.state.src){
-    if(!isHost){
-      // Guest: load silently, tap-to-play needed
-      loadVideoForGuest(room.state.src).catch(()=>{});
-      currentState = room.state;
-    } else {
-      // Host: restore last state
+    currentState = room.state;
+    if(isHost){
       currentVideoId = room.state.src;
       loadVideoAsHost(room.state.src, { restore:true }).catch(()=>{});
+    } else {
+      loadVideoForGuest(room.state.src).catch(()=>{});
     }
   }
 }
 
 /* =========================================================
-   SUPABASE REALTIME CHANNEL
+   Supabase realtime channel
    ========================================================= */
 function openChannel(){
   return new Promise((resolve, reject) => {
-    const name = `room:${room.code}`;
-    console.log('[RT] opening', name);
-
-    if(channel){
-      try{ sb.removeChannel(channel); }catch{}
-      channel = null;
-    }
-
+    if(channel){ try{ sb.removeChannel(channel); }catch{} channel = null; }
     let settled = false;
     const settle = (kind, val) => {
       if(settled) return;
       settled = true;
-      if(kind === 'resolve') resolve(val);
-      else reject(val);
+      kind === 'resolve' ? resolve(val) : reject(val);
     };
 
     try{
-      channel = sb.channel(name, {
+      channel = sb.channel(`room:${room.code}`, {
         config: {
           broadcast: { self:false },
           presence: { key: clientId },
         },
       });
-    }catch(err){
-      settle('reject', new Error('Could not create realtime channel.'));
-      return;
-    }
+    }catch(err){ settle('reject', err); return; }
 
-    // Presence
     channel.on('presence', { event:'sync' }, () => handlePresence());
 
-    // Chat (postgres_changes on messages)
     channel.on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'messages',
+      event: 'INSERT', schema: 'public', table: 'messages',
       filter: `room_id=eq.${room.id}`,
     }, ({ new: row }) => {
       appendChat({
-        client_id: row.client_id,
-        name: row.name,
-        body: row.body,
+        client_id: row.client_id, name: row.name, body: row.body,
         ts: new Date(row.created_at).getTime(),
       });
     });
 
-    // Reactions broadcast
-    channel.on('broadcast', { event:'reaction' }, ({ payload }) => {
-      showReaction(payload);
-    });
+    channel.on('broadcast', { event:'reaction' }, ({ payload }) => showReaction(payload));
 
-    const localTimer = setTimeout(() => {
+    const timer = setTimeout(() => {
       try{ channel?.unsubscribe(); }catch{}
-      settle('reject', new Error('Realtime connection timed out.'));
+      settle('reject', new Error('Realtime timed out.'));
     }, 12000);
 
-    channel.subscribe((status, err) => {
-      console.log('[RT] status', status, err || '');
+    channel.subscribe((status) => {
+      console.log('[RT]', status);
       if(status === 'SUBSCRIBED'){
-        clearTimeout(localTimer);
-        channel.track({
-          name: myName,
-          is_host: isHost,
-          joined_at: new Date().toISOString(),
-        }).catch(e => console.warn('[RT] track failed', e));
+        clearTimeout(timer);
+        channel.track({ name: myName, is_host: isHost }).catch(()=>{});
         settle('resolve');
-      } else if(status === 'CHANNEL_ERROR'){
-        settle('reject', new Error('Realtime connection failed.'));
-      } else if(status === 'TIMED_OUT'){
-        settle('reject', new Error('Realtime connection timed out.'));
-      } else if(status === 'CLOSED'){
-        settle('reject', new Error('Realtime channel closed.'));
+      } else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'){
+        clearTimeout(timer);
+        settle('reject', new Error('Realtime: ' + status));
       }
     });
   });
@@ -1457,28 +842,22 @@ function openChannel(){
 function handlePresence(){
   if(!channel) return;
   const state = channel.presenceState();
-  const onlineIds = new Set();
+  const ids = new Set();
   let hostPresent = false;
-
   for(const [key, values] of Object.entries(state)){
     if(!values || !values.length) continue;
-    onlineIds.add(key);
+    ids.add(key);
     for(const v of values){
       if(v.is_host) hostPresent = true;
       if(v.name) peerNames[key] = v.name;
     }
   }
-
-  onlineCount.textContent = String(onlineIds.size || 1);
-
-  // Guest host-disconnect handling
+  onlineCountEl.textContent = String(ids.size || 1);
   if(!isHost){
-    if(!hostPresent && onlineIds.size > 0){
+    if(!hostPresent && ids.size > 0){
       if(!hostGraceTimer){
-        toast('The host disconnected. Waiting for them to return…', 5000);
-        hostGraceTimer = setTimeout(() => {
-          endSession('The host left the room.');
-        }, 90000);
+        toast('The host disconnected. Waiting…', 5000);
+        hostGraceTimer = setTimeout(() => endSession('The host left.'), 90000);
       }
     } else if(hostPresent && hostGraceTimer){
       clearTimeout(hostGraceTimer);
@@ -1489,85 +868,43 @@ function handlePresence(){
 }
 
 /* =========================================================
-   PEERJS — playback sync
+   PeerJS
    ========================================================= */
 function setupPeerJs(){
   const wantedId = PEER_PREFIX + room.code.toLowerCase();
+  try{
+    peer = isHost ? new Peer(wantedId, { debug:1 }) : new Peer({ debug:1 });
+  }catch(err){ console.warn('[PEER] create failed', err); return; }
 
   if(isHost){
-    // Host claims the room ID
-    try{
-      peer = new Peer(wantedId, { debug:1 });
-    }catch(err){
-      console.warn('[PEER] could not create peer', err);
-      toast('Live sync unavailable — chat still works.');
-      return;
-    }
-
-    peer.on('open', (id) => {
-      peerReady = true;
-      console.log('[PEER] host open', id);
-    });
-
-    peer.on('connection', (conn) => {
-      setupConnection(conn);
-    });
-
-    peer.on('error', (err) => {
-      console.warn('[PEER] host error', err.type, err.message);
-      if(err.type === 'unavailable-id'){
-        // Someone else has the same ID (stale tab?). We keep the room,
-        // we just can't sync via PeerJS. Chat still works via Supabase.
-        toast('Live sync is busy. Chat still works.', 4000);
-      }
+    peer.on('open', id => console.log('[PEER] host open', id));
+    peer.on('connection', conn => setupConnection(conn));
+    peer.on('error', err => {
+      console.warn('[PEER] host error', err.type);
+      if(err.type === 'unavailable-id') toast('Live sync busy. Chat still works.', 4000);
     });
   } else {
-    // Guest: connect to host's ID
-    try{
-      peer = new Peer({ debug:1 });
-    }catch(err){
-      console.warn('[PEER] guest could not create peer', err);
-      return;
-    }
-
     peer.on('open', () => {
       const conn = peer.connect(wantedId, { reliable:true, metadata:{ name: myName } });
       const timer = setTimeout(() => {
-        if(!hostConn){
-          console.warn('[PEER] guest connect timeout');
-          toast('Live sync unavailable — chat still works.', 4000);
-        }
+        if(!hostConn) toast('Live sync unavailable. Chat still works.', 4000);
       }, 8000);
-
       conn.on('open', () => {
         clearTimeout(timer);
         hostConn = conn;
-        peerReady = true;
         setupConnection(conn);
         sendToHost({ type:'hello', name: myName });
-        console.log('[PEER] guest connected');
       });
-
-      conn.on('error', (err) => {
-        console.warn('[PEER] guest conn error', err);
-      });
+      conn.on('error', err => console.warn('[PEER] guest conn error', err));
     });
-
-    peer.on('error', (err) => {
-      console.warn('[PEER] guest error', err.type, err.message);
-      if(err.type === 'peer-unavailable'){
-        toast('Live sync unavailable — chat still works.', 4000);
-      }
-    });
+    peer.on('error', err => console.warn('[PEER] guest error', err.type));
   }
 }
 
 function setupConnection(conn){
   if(!peerConnections.includes(conn)) peerConnections.push(conn);
   if(!isHost) hostConn = conn;
-
-  conn.on('data', (data) => handlePeerMessage(data, conn));
-
+  conn.on('data', data => handlePeerMessage(data, conn));
   conn.on('close', () => {
     peerConnections = peerConnections.filter(c => c !== conn);
     if(!isHost && conn === hostConn) hostConn = null;
@@ -1575,21 +912,19 @@ function setupConnection(conn){
     delete peerNames[conn.peer];
     appendSystem(`${nm} left the room.`);
   });
-
-  conn.on('error', (err) => console.warn('[PEER] conn error', err));
+  conn.on('error', err => console.warn('[PEER] conn error', err));
 }
 
 function sendToHost(msg){
-  if(hostConn && hostConn.open){
-    try{ hostConn.send(msg); }catch{}
-  }
+  if(hostConn && hostConn.open){ try{ hostConn.send(msg); }catch{} }
 }
 function broadcastPeer(msg, except = null){
   for(const c of peerConnections){
-    if(c !== except && c.open){
-      try{ c.send(msg); }catch{}
-    }
+    if(c !== except && c.open){ try{ c.send(msg); }catch{} }
   }
+}
+function sendTo(conn, msg){
+  if(conn && conn.open){ try{ conn.send(msg); }catch{} }
 }
 
 function handlePeerMessage(data, fromConn){
@@ -1598,7 +933,6 @@ function handlePeerMessage(data, fromConn){
     case 'hello':
       peerNames[fromConn.peer] = (data.name || 'Guest').slice(0,18);
       if(isHost && currentVideoId){
-        // Send current state to the new guest
         sendTo(fromConn, { type:'state', state: buildLiveState() });
       }
       break;
@@ -1606,75 +940,53 @@ function handlePeerMessage(data, fromConn){
       if(!isHost) applyRemoteState(data.state);
       break;
     case 'request-sync':
-      if(isHost && currentVideoId){
-        sendTo(fromConn, { type:'state', state: buildLiveState() });
-      }
+      if(isHost && currentVideoId) sendTo(fromConn, { type:'state', state: buildLiveState() });
       break;
-  }
-}
-function sendTo(conn, msg){
-  if(conn && conn.open){
-    try{ conn.send(msg); }catch{}
   }
 }
 
 /* =========================================================
-   YOUTUBE PLAYER
+   YouTube player
    ========================================================= */
-function setupPlayer(){
-  // Lazy: created when a video is loaded.
-}
+function setupPlayer(){ /* lazy */ }
 
 async function loadVideoAsHost(videoId, { restore=false } = {}){
   if(!isHost || !videoId) return;
   stageEmpty.hidden = true;
   ytWrap.hidden = false;
 
-  try{
-    const YT = await loadYouTubeApi();
-    if(player && ytReady && currentVideoId === videoId){
-      pushState({}, { force:true });
-      return;
-    }
-    if(player){ try{ player.destroy(); }catch{} player = null; ytReady = false; }
+  const YT = await loadYouTubeApi();
+  if(player && ytReady && currentVideoId === videoId){
+    pushState({}, { force:true });
+    return;
+  }
+  if(player){ try{ player.destroy(); }catch{} player = null; ytReady = false; }
+  ytHost.replaceChildren();
+  currentVideoId = videoId;
 
-    ytHost.replaceChildren();
-    currentVideoId = videoId;
-
-    await new Promise((resolve) => {
-      player = new YT.Player(ytHost, {
-        videoId,
-        width: '100%',
-        height: '100%',
-        playerVars: {
-          controls: 0, disablekb: 1, modestbranding: 1,
-          rel: 0, playsinline: 1, fs: 0, iv_load_policy: 3,
-          origin: location.origin,
+  await new Promise(resolve => {
+    player = new YT.Player(ytHost, {
+      videoId,
+      width: '100%', height: '100%',
+      playerVars: {
+        controls: 0, disablekb: 1, modestbranding: 1,
+        rel: 0, playsinline: 1, fs: 0, iv_load_policy: 3,
+        origin: location.origin,
+      },
+      events: {
+        onReady: () => { ytReady = true; resolve(); },
+        onStateChange: (e) => {
+          if(applyingRemote) return;
+          if(e.data === 1 || e.data === 2 || e.data === 0) pushState({}, { force:true });
         },
-        events: {
-          onReady: () => { ytReady = true; resolve(); },
-          onStateChange: (e) => {
-            if(applyingRemote) return;
-            if(e.data === 1 || e.data === 2 || e.data === 0){
-              pushState({}, { force:true });
-            }
-          },
-          onError: () => toast('That YouTube video cannot be played here.'),
-        }
-      });
+        onError: () => toast('That YouTube video cannot be played here.'),
+      }
     });
+  });
 
-    if(!restore){
-      pushState({
-        kind: 'youtube',
-        src: videoId,
-        playing: false,
-        position: 0,
-        at: Date.now(),
-      }, { force:true, replace:true });
-    }
-  }catch(err){
-    toast(err.message || 'Could not load the video.');
+  if(!restore){
+    pushState({ kind:'youtube', src:videoId, playing:false, position:0, at:Date.now() },
+              { force:true, replace:true });
   }
 }
 
@@ -1683,37 +995,32 @@ async function loadVideoForGuest(videoId){
   stageEmpty.hidden = true;
   ytWrap.hidden = false;
 
-  try{
-    const YT = await loadYouTubeApi();
-    if(player){ try{ player.destroy(); }catch{} player = null; ytReady = false; }
-    ytHost.replaceChildren();
-    currentVideoId = videoId;
+  const YT = await loadYouTubeApi();
+  if(player){ try{ player.destroy(); }catch{} player = null; ytReady = false; }
+  ytHost.replaceChildren();
+  currentVideoId = videoId;
 
-    await new Promise((resolve) => {
-      player = new YT.Player(ytHost, {
-        videoId,
-        width: '100%',
-        height: '100%',
-        playerVars: {
-          controls: 0, disablekb: 1, modestbranding: 1,
-          rel: 0, playsinline: 1, fs: 0, iv_load_policy: 3,
-          origin: location.origin,
+  await new Promise(resolve => {
+    player = new YT.Player(ytHost, {
+      videoId,
+      width: '100%', height: '100%',
+      playerVars: {
+        controls: 0, disablekb: 1, modestbranding: 1,
+        rel: 0, playsinline: 1, fs: 0, iv_load_policy: 3,
+        origin: location.origin,
+      },
+      events: {
+        onReady: () => {
+          ytReady = true;
+          if(!userHasInteracted) tapPlay.hidden = false;
+          resolve();
         },
-        events: {
-          onReady: () => {
-            ytReady = true;
-            if(!userHasInteracted) tapPlay.hidden = false;
-            resolve();
-          },
-          onError: () => toast('That YouTube video cannot be played here.'),
-        }
-      });
+        onError: () => toast('That YouTube video cannot be played here.'),
+      }
     });
+  });
 
-    applyPlaybackState(currentState);
-  }catch(err){
-    toast(err.message || 'Could not load the video.');
-  }
+  applyPlaybackState(currentState);
 }
 
 function buildLiveState(){
@@ -1725,47 +1032,30 @@ function buildLiveState(){
       playing = player.getPlayerState?.() === 1;
     }catch{}
   }
-  return {
-    kind: 'youtube',
-    src: currentVideoId,
-    playing,
-    position: pos,
-    at: Date.now(),
-  };
+  return { kind:'youtube', src: currentVideoId, playing, position: pos, at: Date.now() };
 }
 
 function pushState(patch = {}, opts = {}){
   if(!isHost) return;
-
   const now = Date.now();
-  if(!opts.force && now - (lastPersist || 0) < 350) return;
+  if(!opts.force && now - lastPersist < 350) return;
 
   let next;
   if(opts.replace){
-    next = {
-      kind: 'youtube',
-      src: patch.src || currentVideoId,
-      playing: false,
-      position: 0,
-      at: now,
-    };
+    next = { kind:'youtube', src: patch.src || currentVideoId, playing:false, position:0, at:now };
   } else {
     next = buildLiveState();
+    if(patch.position !== undefined) next.position = patch.position;
+    if(patch.playing !== undefined) next.playing = patch.playing;
   }
-  if(patch.position !== undefined && !opts.replace) next.position = patch.position;
-  if(patch.playing !== undefined && !opts.replace) next.playing = patch.playing;
-
   currentState = next;
 
-  // Send via PeerJS
   broadcastPeer({ type:'state', state: next });
 
-  // Persist to Supabase on a throttle
   if(now - lastPersist > 8000 || opts.persist){
     lastPersist = now;
-    persistState(room.id, next).catch(()=>{});
+    persistStateDb(room.id, next).catch(()=>{});
   }
-
   refreshControls();
 }
 
@@ -1773,7 +1063,6 @@ function applyRemoteState(state){
   if(!state || typeof state !== 'object') return;
   const targetId = state.src;
   const isNewVideo = targetId && targetId !== currentVideoId;
-
   currentState = state;
   currentVideoId = targetId;
 
@@ -1794,9 +1083,7 @@ function applyPlaybackState(state){
   applyingRemote = true;
   try{
     const current = Number(player.getCurrentTime?.() || 0);
-    if(Math.abs(current - target) > DRIFT_TOLERANCE){
-      player.seekTo(target, true);
-    }
+    if(Math.abs(current - target) > DRIFT_TOLERANCE) player.seekTo(target, true);
     const isPlaying = player.getPlayerState?.() === 1;
     if(state.playing && !isPlaying){
       if(userHasInteracted) player.playVideo();
@@ -1805,7 +1092,6 @@ function applyPlaybackState(state){
       player.pauseVideo();
     }
   }catch{}
-
   setTimeout(() => { applyingRemote = false; }, 700);
   refreshControls();
 }
@@ -1835,20 +1121,19 @@ function setupControls(){
     }catch{}
   });
 
-  seek.addEventListener('input', () => {
+  seekEl.addEventListener('input', () => {
     draggingSeek = true;
     if(player && ytReady){
       const d = Number(player.getDuration?.() || 0);
-      if(d > 0) timeNow.textContent = fmtTime((Number(seek.value)/1000) * d);
+      if(d > 0) timeNow.textContent = fmtTime((Number(seekEl.value)/1000) * d);
     }
   });
-
-  seek.addEventListener('change', () => {
+  seekEl.addEventListener('change', () => {
     draggingSeek = false;
     if(!isHost || !player || !ytReady) return;
     const d = Number(player.getDuration?.() || 0);
     if(d <= 0) return;
-    const target = (Number(seek.value)/1000) * d;
+    const target = (Number(seekEl.value)/1000) * d;
     applyingRemote = true;
     player.seekTo(target, true);
     setTimeout(() => {
@@ -1866,22 +1151,20 @@ function setupControls(){
     if(!id){ toast('That does not look like a YouTube link.'); return; }
     sourceInput.value = '';
     sourceInput.blur();
-    loadVideoAsHost(id);
+    loadVideoAsHost(id).catch(err => toast(err.message || 'Could not load video.'));
   });
 
-  // Progress ticker
   setInterval(() => {
     if(!player || !ytReady || draggingSeek) return;
     try{
       const cur = Number(player.getCurrentTime?.() || 0);
       const dur = Number(player.getDuration?.() || 0);
       if(dur > 0){
-        seek.value = String(Math.round((cur/dur) * 1000));
+        seekEl.value = String(Math.round((cur/dur) * 1000));
         timeNow.textContent = fmtTime(cur);
         timeEnd.textContent = fmtTime(dur);
       }
-      const playing = player.getPlayerState?.() === 1;
-      playBtn.textContent = playing ? '❚❚' : '▶';
+      playBtn.textContent = player.getPlayerState?.() === 1 ? '❚❚' : '▶';
     }catch{}
   }, 400);
 
@@ -1890,9 +1173,7 @@ function setupControls(){
     tapPlay.hidden = true;
     if(player && ytReady){
       try{ player.playVideo(); }catch{}
-      if(!isHost){
-        sendToHost({ type:'request-sync' });
-      }
+      if(!isHost) sendToHost({ type:'request-sync' });
       applyPlaybackState(currentState);
     }
   });
@@ -1913,19 +1194,15 @@ function setupControls(){
     }
   });
 
-  // Host heartbeat
   heartbeatTimer = setInterval(() => {
     if(!isHost) return;
-    if(currentState.kind === 'youtube' && player && ytReady){
-      pushState({}, { force:true });
-    }
+    if(currentState.kind === 'youtube' && player && ytReady) pushState({}, { force:true });
   }, HEARTBEAT_MS);
 }
 
 function refreshControls(){
   if(player && ytReady){
-    const playing = player.getPlayerState?.() === 1;
-    playBtn.textContent = playing ? '❚❚' : '▶';
+    playBtn.textContent = player.getPlayerState?.() === 1 ? '❚❚' : '▶';
   }
 }
 
@@ -1936,19 +1213,15 @@ function appendChat(msg){
   const mine = msg.client_id === clientId;
   const wrap = document.createElement('div');
   wrap.className = 'msg' + (mine ? ' me' : '');
-
   const who = document.createElement('span');
   who.className = 'who';
   who.textContent = mine ? 'You' : (msg.name || 'Guest');
-
   const body = document.createElement('span');
   body.className = 'body';
   body.textContent = msg.body;
-
   const t = document.createElement('span');
   t.className = 'time';
   try{ t.textContent = new Date(msg.ts || Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }catch{}
-
   wrap.append(who, body, t);
   chatList.appendChild(wrap);
   chatList.scrollTop = chatList.scrollHeight;
@@ -1967,23 +1240,20 @@ function setupChat(){
     const text = chatInput.value.trim();
     if(!text) return;
     chatInput.value = '';
-    chatInput.style.height = '';
     try{
       await sendMessageDb(room.id, clientId, myName, text);
-      // The INSERT will come back via realtime and be rendered.
     }catch(err){
       toast(err.message || 'Message could not be sent.');
       chatInput.value = text;
     }
   });
-
   chatInput.addEventListener('focus', () => {
     setTimeout(() => { chatList.scrollTop = chatList.scrollHeight; }, 260);
   });
 }
 
 /* =========================================================
-   Reactions (Supabase broadcast)
+   Reactions
    ========================================================= */
 function setupReactions(){
   reactionBar.addEventListener('click', (e) => {
@@ -1991,23 +1261,19 @@ function setupReactions(){
     if(!btn) return;
     const emoji = btn.dataset.emoji;
     if(!emoji) return;
-
     const payload = { emoji, name: myName };
     showReaction(payload);
     channel?.send({ type:'broadcast', event:'reaction', payload });
   });
 }
-
 function showReaction(payload){
   if(!payload || !payload.emoji) return;
   const el = document.createElement('span');
   el.className = 'reaction-float';
   el.textContent = payload.emoji;
-  const x = 8 + Math.random() * 84;
-  el.style.left = `${x}%`;
+  el.style.left = (8 + Math.random() * 84) + '%';
   el.style.setProperty('--drift', `${(Math.random()*60 - 30).toFixed(1)}deg`);
-  const scale = 0.9 + Math.random() * 0.3;
-  el.style.fontSize = `${Math.round(36 * scale)}px`;
+  el.style.fontSize = `${Math.round(36 * (0.9 + Math.random()*0.3))}px`;
   reactionLayer.appendChild(el);
   const cleanup = () => { if(el.parentNode) el.parentNode.removeChild(el); };
   el.addEventListener('animationend', cleanup, { once:true });
@@ -2022,17 +1288,11 @@ function setupChrome(){
     try{ await navigator.clipboard.writeText(room.code); toast('Room code copied.'); }
     catch{ toast(`Room code: ${room.code}`, 4000); }
   });
-
   shareBtn.addEventListener('click', async () => {
     const url = new URL(location.href);
     url.search = `?room=${room.code}`;
-    const data = {
-      title:'Watch Together',
-      text:`Join my room with code ${room.code}`,
-      url: url.toString(),
-    };
     if(navigator.share){
-      try{ await navigator.share(data); return; }catch{}
+      try{ await navigator.share({ title:'Watch Together', text:`Join with code ${room.code}`, url: url.toString() }); return; }catch{}
     }
     try{ await navigator.clipboard.writeText(url.toString()); toast('Invite link copied.'); }
     catch{ toast(`Room code: ${room.code}`, 4000); }
@@ -2044,7 +1304,7 @@ function setupChrome(){
    ========================================================= */
 function setupFullscreen(){
   fsBtn.addEventListener('click', toggleFullscreen);
-  fsExit.addEventListener('click', () => {
+  fsExitBtn.addEventListener('click', () => {
     if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
   });
   document.addEventListener('fullscreenchange', () => {
@@ -2052,22 +1312,16 @@ function setupFullscreen(){
     document.body.classList.toggle('is-fullscreen', active);
     if(active){
       const coarse = window.matchMedia?.('(pointer: coarse)').matches;
-      if(coarse && screen.orientation?.lock){
-        screen.orientation.lock('landscape').catch(()=>{});
-      }
+      if(coarse && screen.orientation?.lock) screen.orientation.lock('landscape').catch(()=>{});
     } else {
       try{ screen.orientation?.unlock?.(); }catch{}
     }
   });
 }
 function toggleFullscreen(){
-  if(document.fullscreenElement){
-    document.exitFullscreen().catch(()=>{});
-  } else if(roomApp.requestFullscreen){
-    roomApp.requestFullscreen({ navigationUI:'hide' }).catch(() => toast('Fullscreen is not available here.'));
-  } else {
-    toast('Fullscreen is not available here.');
-  }
+  if(document.fullscreenElement) document.exitFullscreen().catch(()=>{});
+  else if(roomApp.requestFullscreen) roomApp.requestFullscreen({ navigationUI:'hide' }).catch(()=> toast('Fullscreen not available.'));
+  else toast('Fullscreen not available.');
 }
 
 /* =========================================================
@@ -2076,7 +1330,7 @@ function toggleFullscreen(){
 function startParticipantHeartbeat(){
   clearInterval(participantTimer);
   participantTimer = setInterval(() => {
-    if(leaving) return;
+    if(leaving || !room) return;
     touchParticipant(room.id, clientId).catch(()=>{});
   }, 25000);
 }
@@ -2099,46 +1353,44 @@ function endSession(reason){
 async function leaveRoom({ endRoom=false } = {}){
   if(leaving) return;
   leaving = true;
-
   clearInterval(heartbeatTimer);
   clearInterval(participantTimer);
   clearTimeout(hostGraceTimer);
   try{ player?.destroy(); }catch{}
-
-  if(endRoom && isHost && channel){
-    channel.send({ type:'broadcast', event:'reaction', payload:{ emoji:'👋', name:'System' } });
-  }
-
   if(peer){ try{ peer.destroy(); }catch{} peer = null; }
-
   if(channel){
     try{ await channel.untrack(); }catch{}
     try{ await sb.removeChannel(channel); }catch{}
     channel = null;
   }
-
-  try{ await leaveRoomDb(room.id, clientId); }catch{}
-  if(endRoom) try{ await closeRoomDb(room.id); }catch{}
-
+  if(room){
+    try{ await leaveRoomDb(room.id, clientId); }catch{}
+    if(endRoom) try{ await closeRoomDb(room.id); }catch{}
+  }
   location.href = location.pathname;
 }
 
-/* On tab hide/show, refresh presence */
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState !== 'visible') return;
-  if(!channel || leaving) return;
-  channel.track({
-    name: myName,
-    is_host: isHost,
-    joined_at: new Date().toISOString(),
-  }).catch(()=>{});
-  if(room) touchParticipant(room.id, clientId).catch(()=>{});
+  if(!channel || leaving || !room) return;
+  channel.track({ name: myName, is_host: isHost }).catch(()=>{});
+  touchParticipant(room.id, clientId).catch(()=>{});
 });
 
 window.addEventListener('beforeunload', () => {
   if(leaving) return;
   try{ peer?.destroy(); }catch{}
 });
+
+/* =========================================================
+   KICK OFF — after all declarations
+   ========================================================= */
+if(roomCodeParam){
+  bootInit().catch(err => {
+    console.error('[bootInit] uncaught', err);
+    bootFail(err.message || 'Could not open this room.', { retry:true });
+  });
+}
 </script>
 </body>
 </html>
