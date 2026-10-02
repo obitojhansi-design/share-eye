@@ -6,7 +6,6 @@
 <meta name="theme-color" content="#08080f">
 <title>Watch Together — private rooms</title>
 
-<!-- Speed: warm up connections before we need them -->
 <link rel="preconnect" href="https://www.youtube.com" crossorigin>
 <link rel="preconnect" href="https://i.ytimg.com" crossorigin>
 <link rel="preconnect" href="https://www.google.com" crossorigin>
@@ -15,7 +14,6 @@
 <link rel="dns-prefetch" href="https://esm.sh">
 <link rel="dns-prefetch" href="https://unpkg.com">
 
-<!-- Speed: start YouTube API download in parallel with page load -->
 <script src="https://www.youtube.com/iframe_api" async></script>
 
 <style>
@@ -31,7 +29,6 @@ html,body{height:100%}
 body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased;overscroll-behavior-y:none}
 input,button,textarea,select{font-size:16px;font-family:inherit}
 
-/* Landing */
 body.landing{display:flex;align-items:center;justify-content:center;min-height:100dvh;padding:24px 16px calc(24px + env(safe-area-inset-bottom,0px));overflow-x:hidden;position:relative}
 .bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(60% 50% at 15% 10%, rgba(124,92,255,.18), transparent 70%),radial-gradient(55% 45% at 90% 20%, rgba(79,140,255,.16), transparent 70%),radial-gradient(70% 60% at 50% 100%, rgba(124,92,255,.10), transparent 70%)}
 .landing-wrap{position:relative;z-index:1;width:100%;max-width:440px;display:flex;flex-direction:column;gap:16px}
@@ -70,7 +67,6 @@ body.landing{display:flex;align-items:center;justify-content:center;min-height:1
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);max-width:calc(100vw - 32px);padding:12px 18px;border-radius:999px;background:rgba(18,18,30,.94);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:14px;text-align:center;backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .25s, transform .25s;z-index:9999}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* Room */
 body.room{height:100dvh;overflow:hidden;background:var(--bg)}
 .room-app{display:flex;flex-direction:column;height:100dvh;width:100%;overflow:hidden;background:var(--bg-soft);position:relative}
 .boot{position:fixed;inset:0;z-index:5000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:var(--bg)}
@@ -101,11 +97,14 @@ body.room{height:100dvh;overflow:hidden;background:var(--bg)}
 .source-bar .btn{width:auto;min-height:42px;padding:0 14px;font-size:14px}
 
 .controls{display:flex;align-items:center;gap:6px;flex-shrink:0;padding:6px 10px;background:rgba(10,10,18,.75);border-bottom:1px solid rgba(255,255,255,.05)}
-.ctl{width:40px;height:40px;flex-shrink:0;display:grid;place-items:center;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.06);color:#fff;font-size:16px;cursor:pointer}
-.ctl:disabled{opacity:.35;cursor:not-allowed}
+.ctl{width:40px;height:40px;flex-shrink:0;display:grid;place-items:center;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.06);color:#fff;font-size:16px;cursor:pointer;transition:background .15s, transform .12s}
+.ctl:active:not(:disabled){transform:scale(.92)}
+.ctl:disabled{opacity:.30;cursor:not-allowed}
+.ctl.active{border-color:rgba(124,92,255,.55);background:rgba(124,92,255,.18)}
 .time{min-width:36px;flex-shrink:0;text-align:center;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .seek{flex:1;min-width:0;height:24px;accent-color:var(--accent)}
 .seek:disabled{opacity:.35}
+.seek:disabled::-webkit-slider-thumb{cursor:not-allowed}
 
 .chat{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;background:rgba(8,8,16,.55)}
 .chat-head{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.05)}
@@ -225,12 +224,12 @@ body.is-fullscreen .fs-exit{display:flex}
     </form>
 
     <div class="controls">
-      <button class="ctl" id="playBtn" type="button" disabled>▶</button>
+      <button class="ctl" id="playBtn" type="button" aria-label="Play or pause" disabled>▶</button>
       <span class="time" id="timeNow">0:00</span>
       <input class="seek" id="seek" type="range" min="0" max="1000" value="0" disabled>
       <span class="time" id="timeEnd">0:00</span>
-      <button class="ctl" id="muteBtn" type="button" disabled>🔊</button>
-      <button class="ctl" id="fsBtn" type="button">⛶</button>
+      <button class="ctl" id="muteBtn" type="button" aria-label="Mute or unmute" disabled>🔊</button>
+      <button class="ctl" id="fsBtn" type="button" aria-label="Fullscreen">⛶</button>
     </div>
 
     <section class="chat">
@@ -271,9 +270,6 @@ body.is-fullscreen .fs-exit{display:flex}
 <script type="module">
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4';
 
-/* =========================================================
-   CONFIG
-   ========================================================= */
 const SUPABASE_URL  = 'https://fbqdpoqkbzbzvbrywaek.supabase.co';
 const SUPABASE_ANON = 'sb_publishable_n-I8VgfUDnH3J35KZrLYsw_j1XTn0E5';
 
@@ -284,19 +280,17 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON, {
 
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const CODE_LEN = 6;
-const PEER_PREFIX = 'wtw-yt-v2-';
+const PEER_PREFIX = 'wtw-yt-v3-';
 const MAX_PARTICIPANTS = 3;
-const HEARTBEAT_MS = 5000;
-const DRIFT_TOLERANCE = 2;
+const HEARTBEAT_MS = 4000;
+const DRIFT_TOLERANCE = 1.5;
 const CHAT_HISTORY = 60;
 const K_NAME = 'wtw.name';
 const K_ID = 'wtw.clientId';
 
 const $ = sel => document.querySelector(sel);
 
-/* =========================================================
-   Helpers
-   ========================================================= */
+/* ---------- Helpers ---------- */
 function uuid(){
   if(crypto.randomUUID) return crypto.randomUUID();
   const b = new Uint8Array(16);
@@ -364,9 +358,7 @@ function friendly(err, fallback='Something went wrong. Please try again.'){
   return fallback;
 }
 
-/* =========================================================
-   YouTube API — resolves against the preloaded script
-   ========================================================= */
+/* ---------- YouTube API ---------- */
 let ytApiPromise = null;
 function loadYouTubeApi(){
   if(ytApiPromise) return ytApiPromise;
@@ -379,8 +371,6 @@ function loadYouTubeApi(){
       if(typeof prev === 'function') prev();
       resolve(window.YT);
     };
-    // Belt and braces: also poll briefly, in case the script already fired
-    // its callback before this module ran.
     let tries = 0;
     const poll = setInterval(() => {
       tries++;
@@ -388,14 +378,11 @@ function loadYouTubeApi(){
         clearInterval(poll);
         clearTimeout(timer);
         resolve(window.YT);
-      } else if(tries > 40){
-        clearInterval(poll);
-      }
+      } else if(tries > 40){ clearInterval(poll); }
     }, 250);
   });
   return ytApiPromise;
 }
-
 function parseYouTubeId(input){
   const raw = String(input || '').trim();
   if(!raw) return null;
@@ -416,9 +403,7 @@ function parseYouTubeId(input){
   return null;
 }
 
-/* =========================================================
-   Supabase ops
-   ========================================================= */
+/* ---------- Supabase ops ---------- */
 async function createRoom(name){
   const clientId = getClientId();
   let lastErr = null;
@@ -561,7 +546,7 @@ joinForm.addEventListener('submit', async (e) => {
 });
 
 /* =========================================================
-   ROOM — DOM refs
+   ROOM — refs
    ========================================================= */
 const roomApp     = $('#roomApp');
 const roomContent = $('#roomContent');
@@ -616,6 +601,7 @@ let ytReady = false;
 let currentVideoId = null;
 let currentState = { kind:'none', src:null, playing:false, position:0, at:0 };
 let applyingRemote = false;
+let applyingTimer = 0;
 let draggingSeek = false;
 let userHasInteracted = false;
 let leaving = false;
@@ -627,11 +613,12 @@ let peerNames = {};
 
 let heartbeatTimer = 0;
 let lastPersist = 0;
+let lastBroadcast = 0;
 let hostGraceTimer = 0;
 let participantTimer = 0;
 
 /* =========================================================
-   Boot screen helpers
+   Boot helpers
    ========================================================= */
 function boot(text){
   bootScreen.classList.remove('is-error');
@@ -666,13 +653,12 @@ function bootDone(){
 }
 
 /* =========================================================
-   MAIN BOOT — parallelized for speed
+   MAIN BOOT
    ========================================================= */
 const params = new URLSearchParams(location.search);
 const roomCodeParam = normalizeCode(params.get('room') || params.get('c'));
 
 async function bootInit(){
-  // 1. Switch to room mode immediately so the boot screen is visible
   document.body.classList.remove('landing');
   document.body.classList.add('room');
   if(landing) landing.hidden = true;
@@ -686,21 +672,14 @@ async function bootInit(){
   if(code.length !== CODE_LEN){ bootFail('That room code is not valid.'); return; }
   codeValueEl.textContent = code;
 
-  // 2. Find the room (blocking — needed before we can do anything else)
   let found;
-  try{
-    found = await withTimeout(findRoom(code), 12000, 'findRoom');
-  }catch(err){
-    console.error('[boot] findRoom failed', err);
-    bootFail('Could not check the room. Please retry.', { retry:true });
-    return;
-  }
+  try{ found = await withTimeout(findRoom(code), 12000, 'findRoom'); }
+  catch(err){ bootFail('Could not check the room. Please retry.', { retry:true }); return; }
   if(!found){ bootFail('Room not found.'); return; }
 
   room = found;
   isHost = room.host_id === clientId;
 
-  // 3. Closed / expired handling
   if(roomIsClosed(room)){
     const expired = !room.expires_at || new Date(room.expires_at).getTime() <= Date.now();
     if(isHost && !expired){
@@ -727,7 +706,6 @@ async function bootInit(){
     return;
   }
 
-  // 4. Guest: participant count check (quick)
   if(!isHost){
     try{
       const count = await withSoftTimeout(countParticipants(room.id), 3000, 0);
@@ -735,7 +713,7 @@ async function bootInit(){
     }catch{}
   }
 
-  // 5. Wire UI *before* joinRoom resolves, so we're ready to draw the instant it does
+  // Wire UI before joinRoom so we're ready the instant it resolves
   setupPlayer();
   setupControls();
   setupChat();
@@ -743,31 +721,24 @@ async function bootInit(){
   setupReactions();
   setupFullscreen();
 
-  chatHint.textContent = isHost ? 'You are the host' : 'Only the host controls playback';
-  playBtn.disabled = !isHost;
+  // Guests get pause/play power (not seek, not mute)
+  playBtn.disabled = false;
   seekEl.disabled = !isHost;
   muteBtn.disabled = !isHost;
   sourceBar.hidden = !isHost;
 
-  // 6. Join participants table
-  try{
-    await withTimeout(joinRoom(room, myName), 10000, 'joinRoom');
-  }catch(err){
-    console.error('[boot] joinRoom failed', err);
-    bootFail('Could not join the room. Please retry.', { retry:true });
-    return;
-  }
+  chatHint.textContent = isHost
+    ? 'You are the host'
+    : 'You can pause/play. Host controls the rest.';
 
-  // 7. Show the room!
+  try{ await withTimeout(joinRoom(room, myName), 10000, 'joinRoom'); }
+  catch(err){ bootFail('Could not join the room. Please retry.', { retry:true }); return; }
+
   bootDone();
   document.title = `Room ${code} — Watch Together`;
   appendSystem(isHost ? 'You created this room.' : 'You joined the room.');
 
-  // =========================================================
-  // 8. KICK OFF BACKGROUND WORK IN PARALLEL
-  // =========================================================
-
-  // (A) START LOADING THE VIDEO RIGHT NOW — this is the critical path
+  // Start video load immediately (parallel with everything else)
   if(room.state && room.state.kind === 'youtube' && room.state.src){
     currentState = room.state;
     currentVideoId = room.state.src;
@@ -777,7 +748,7 @@ async function bootInit(){
     p.catch(err => console.warn('[video] initial load failed', err));
   }
 
-  // (B) Chat history — background
+  // Background work
   loadRecentMessages(room.id)
     .then(rows => {
       if(rows && rows.length){
@@ -791,16 +762,8 @@ async function bootInit(){
     })
     .catch(() => {});
 
-  // (C) Realtime channel — background
-  openChannel().catch(err => {
-    console.warn('[RT] channel failed', err);
-    // Non-fatal: chat inserts won't stream, reactions won't broadcast.
-  });
-
-  // (D) PeerJS — background
+  openChannel().catch(err => console.warn('[RT] channel failed', err));
   try{ setupPeerJs(); }catch(err){ console.warn('[PEER] setup failed', err); }
-
-  // (E) Participant heartbeat
   startParticipantHeartbeat();
 }
 
@@ -846,7 +809,6 @@ function openChannel(){
     }, 12000);
 
     channel.subscribe((status) => {
-      console.log('[RT]', status);
       if(status === 'SUBSCRIBED'){
         clearTimeout(timer);
         channel.track({ name: myName, is_host: isHost }).catch(()=>{});
@@ -953,14 +915,27 @@ function handlePeerMessage(data, fromConn){
     case 'hello':
       peerNames[fromConn.peer] = (data.name || 'Guest').slice(0,18);
       if(isHost && currentVideoId){
+        // Send current video + state to the freshly joined guest
         sendTo(fromConn, { type:'state', state: buildLiveState() });
       }
       break;
+
     case 'state':
+      // Guests receive live host state
       if(!isHost) applyRemoteState(data.state);
       break;
+
     case 'request-sync':
-      if(isHost && currentVideoId) sendTo(fromConn, { type:'state', state: buildLiveState() });
+      if(isHost && currentVideoId){
+        sendTo(fromConn, { type:'state', state: buildLiveState() });
+      }
+      break;
+
+    case 'guest-action':
+      // A guest asked the host to do something
+      if(isHost && data.action === 'toggle-play'){
+        togglePlaybackAsHost();
+      }
       break;
   }
 }
@@ -996,8 +971,11 @@ async function loadVideoAsHost(videoId, { restore=false } = {}){
       events: {
         onReady: () => { ytReady = true; resolve(); },
         onStateChange: (e) => {
-          if(applyingRemote) return;
-          if(e.data === 1 || e.data === 2 || e.data === 0) pushState({}, { force:true });
+          // Do NOT block on applyingRemote here — the host's own state
+          // changes MUST be broadcast. Guests never reach this code.
+          if(e.data === 1 || e.data === 2 || e.data === 0){
+            pushState({}, { force:true });
+          }
         },
         onError: () => toast('That YouTube video cannot be played here.'),
       }
@@ -1032,6 +1010,7 @@ async function loadVideoForGuest(videoId){
       events: {
         onReady: () => {
           ytReady = true;
+          // Guests need a tap for autoplay
           if(!userHasInteracted) tapPlay.hidden = false;
           resolve();
         },
@@ -1058,7 +1037,8 @@ function buildLiveState(){
 function pushState(patch = {}, opts = {}){
   if(!isHost) return;
   const now = Date.now();
-  if(!opts.force && now - lastPersist < 350) return;
+  if(!opts.force && now - lastBroadcast < 250) return;
+  lastBroadcast = now;
 
   let next;
   if(opts.replace){
@@ -1067,15 +1047,19 @@ function pushState(patch = {}, opts = {}){
     next = buildLiveState();
     if(patch.position !== undefined) next.position = patch.position;
     if(patch.playing !== undefined) next.playing = patch.playing;
+    if(patch.at !== undefined) next.at = patch.at;
   }
   currentState = next;
 
+  // Broadcast to all guests
   broadcastPeer({ type:'state', state: next });
 
+  // Persist occasionally
   if(now - lastPersist > 8000 || opts.persist){
     lastPersist = now;
     persistStateDb(room.id, next).catch(()=>{});
   }
+
   refreshControls();
 }
 
@@ -1083,6 +1067,7 @@ function applyRemoteState(state){
   if(!state || typeof state !== 'object') return;
   const targetId = state.src;
   const isNewVideo = targetId && targetId !== currentVideoId;
+
   currentState = state;
   currentVideoId = targetId;
 
@@ -1100,10 +1085,16 @@ function applyPlaybackState(state){
   const elapsed = state.playing ? (Date.now() - (state.at || Date.now()))/1000 : 0;
   const target = Math.max(0, Number(state.position || 0) + elapsed);
 
+  clearTimeout(applyingTimer);
   applyingRemote = true;
+
   try{
+    // 1. Sync position (only if meaningful drift)
     const current = Number(player.getCurrentTime?.() || 0);
-    if(Math.abs(current - target) > DRIFT_TOLERANCE) player.seekTo(target, true);
+    if(Math.abs(current - target) > DRIFT_TOLERANCE){
+      player.seekTo(target, true);
+    }
+    // 2. Sync play/pause
     const isPlaying = player.getPlayerState?.() === 1;
     if(state.playing && !isPlaying){
       if(userHasInteracted) player.playVideo();
@@ -1111,9 +1102,24 @@ function applyPlaybackState(state){
     } else if(!state.playing && isPlaying){
       player.pauseVideo();
     }
-  }catch{}
-  setTimeout(() => { applyingRemote = false; }, 700);
+  }catch(err){ console.warn('[sync] apply failed', err); }
+
+  applyingTimer = setTimeout(() => { applyingRemote = false; }, 700);
   refreshControls();
+}
+
+/* =========================================================
+   Host-side toggle (called by host's button AND by guest request)
+   ========================================================= */
+function togglePlaybackAsHost(){
+  if(!isHost || !player || !ytReady) return;
+  userHasInteracted = true;
+  tapPlay.hidden = true;
+  const playing = player.getPlayerState?.() === 1;
+  if(playing) player.pauseVideo(); else player.playVideo();
+  // onStateChange will fire and push the new state to everyone.
+  // Also push once after a short delay in case onStateChange misses it.
+  setTimeout(() => pushState({}, { force:true }), 300);
 }
 
 /* =========================================================
@@ -1121,27 +1127,29 @@ function applyPlaybackState(state){
    ========================================================= */
 function setupControls(){
   playBtn.addEventListener('click', () => {
-    if(!isHost || !player || !ytReady) return;
+    if(!player || !ytReady) return;
     userHasInteracted = true;
     tapPlay.hidden = true;
-    const playing = player.getPlayerState?.() === 1;
-    applyingRemote = true;
-    if(playing) player.pauseVideo(); else player.playVideo();
-    setTimeout(() => {
-      applyingRemote = false;
-      pushState({}, { force:true });
-    }, 250);
+
+    if(isHost){
+      // Host: act directly; onStateChange broadcasts.
+      togglePlaybackAsHost();
+    } else {
+      // Guest: ask the host to toggle. Host will echo the state.
+      sendToHost({ type:'guest-action', action:'toggle-play' });
+    }
   });
 
   muteBtn.addEventListener('click', () => {
     if(!isHost || !player || !ytReady) return;
     try{
-      if(player.isMuted?.()){ player.unMute(); muteBtn.textContent = '🔊'; }
-      else { player.mute(); muteBtn.textContent = '🔇'; }
+      if(player.isMuted?.()){ player.unMute(); muteBtn.textContent = '🔊'; muteBtn.classList.remove('active'); }
+      else { player.mute(); muteBtn.textContent = '🔇'; muteBtn.classList.add('active'); }
     }catch{}
   });
 
   seekEl.addEventListener('input', () => {
+    if(!isHost) return;
     draggingSeek = true;
     if(player && ytReady){
       const d = Number(player.getDuration?.() || 0);
@@ -1154,12 +1162,11 @@ function setupControls(){
     const d = Number(player.getDuration?.() || 0);
     if(d <= 0) return;
     const target = (Number(seekEl.value)/1000) * d;
-    applyingRemote = true;
-    player.seekTo(target, true);
+    try{ player.seekTo(target, true); }catch{}
+    // Seek doesn't reliably trigger onStateChange, so push manually.
     setTimeout(() => {
-      applyingRemote = false;
       pushState({ position: target, at: Date.now() }, { force:true });
-    }, 400);
+    }, 150);
   });
 
   sourceBar.addEventListener('submit', (e) => {
@@ -1174,6 +1181,7 @@ function setupControls(){
     loadVideoAsHost(id).catch(err => toast(err.message || 'Could not load video.'));
   });
 
+  // Ticker: update progress bar + button icon
   setInterval(() => {
     if(!player || !ytReady || draggingSeek) return;
     try{
@@ -1184,7 +1192,9 @@ function setupControls(){
         timeNow.textContent = fmtTime(cur);
         timeEnd.textContent = fmtTime(dur);
       }
-      playBtn.textContent = player.getPlayerState?.() === 1 ? '❚❚' : '▶';
+      const playing = player.getPlayerState?.() === 1;
+      playBtn.textContent = playing ? '❚❚' : '▶';
+      playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
     }catch{}
   }, 400);
 
@@ -1193,8 +1203,12 @@ function setupControls(){
     tapPlay.hidden = true;
     if(player && ytReady){
       try{ player.playVideo(); }catch{}
-      if(!isHost) sendToHost({ type:'request-sync' });
-      applyPlaybackState(currentState);
+      if(!isHost){
+        // Ask the host for a fresh state so we resync
+        sendToHost({ type:'request-sync' });
+      } else {
+        applyPlaybackState(currentState);
+      }
     }
   });
 
@@ -1214,15 +1228,20 @@ function setupControls(){
     }
   });
 
+  // Host heartbeat: keeps guests synced and catches drift
   heartbeatTimer = setInterval(() => {
     if(!isHost) return;
-    if(currentState.kind === 'youtube' && player && ytReady) pushState({}, { force:true });
+    if(currentState.kind === 'youtube' && player && ytReady){
+      pushState({}, { force:true });
+    }
   }, HEARTBEAT_MS);
 }
 
 function refreshControls(){
   if(player && ytReady){
-    playBtn.textContent = player.getPlayerState?.() === 1 ? '❚❚' : '▶';
+    const playing = player.getPlayerState?.() === 1;
+    playBtn.textContent = playing ? '❚❚' : '▶';
+    playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
   }
 }
 
@@ -1260,9 +1279,8 @@ function setupChat(){
     const text = chatInput.value.trim();
     if(!text) return;
     chatInput.value = '';
-    try{
-      await sendMessageDb(room.id, clientId, myName, text);
-    }catch(err){
+    try{ await sendMessageDb(room.id, clientId, myName, text); }
+    catch(err){
       toast(err.message || 'Message could not be sent.');
       chatInput.value = text;
     }
